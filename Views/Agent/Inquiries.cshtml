@@ -1,0 +1,188 @@
+@model IEnumerable<BaleteGroveRES.Models.Admin.Inquiry>
+
+@{
+    ViewData["Title"] = "Inquiries";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/agent-inquiries.css">
+
+<partial name="~/Views/Shared/_AgentSidebar.cshtml" />
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+        <h1>Inquiries</h1>
+        <br>
+        
+        <h4 style="margin-top: 10px;">Available Inquiry Pool</h4>
+        <br>
+        <div class="table-header">
+            <div class="left-controls">
+                <input type="text" placeholder="Search pool..." class="search-input" id="poolSearch" onkeyup="filterPool()" />
+                <select class="entries-select" id="poolEntries" onchange="changePoolEntries()">
+                    <option value="5" selected>Show 5</option>
+                    <option value="10">Show 10</option>
+                </select>
+                <div class="entry-counter" id="poolCounter">0 entries</div>
+            </div>
+        </div>
+
+        <div class="table-wrapper" style="margin-bottom:0;">
+            <table id="poolTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Lot Name</th>
+                        <th>Reason</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if(Model != null && Model.Any())
+                    {
+                        foreach(var item in Model)
+                        {
+                            <tr>
+                                <td>@item.DateSubmitted.ToString("g")</td>
+                                <td style="font-weight: 600;">@item.Property?.PropertyName</td>
+                                <td>@item.Reason</td>
+                                <td>
+                                    @if(ViewBag.IsOnLeave == true)
+                                    {
+                                        <button type="button" class="btn-action" style="background:#ccc; border-color:#ccc; color:#666; cursor:not-allowed; opacity:0.8;" title="You are currently on leave and cannot accept inquiries.">Claim / Accept</button>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="AcceptInquiry" asp-controller="Agent" method="post" style="display:inline;">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn-action">Claim / Accept</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No pending inquiries at this time.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination-controls" id="poolPagination">
+            <button onclick="poolFirstPage()" id="poolFirstBtn">First</button>
+            <button onclick="poolPrevPage()" id="poolPrevBtn">Prev</button>
+            <span class="page-info" id="poolPageInfo">Page 1 of 1</span>
+            <button onclick="poolNextPage()" id="poolNextBtn">Next</button>
+            <button onclick="poolLastPage()" id="poolLastBtn">Last</button>
+        </div>
+
+        
+        <h4 style="margin-top: 40px;">Past Inquiries</h4>
+        <br>
+        <div class="table-wrapper" style="margin-bottom:0;">
+            <table class="table" id="pastTable" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background:#f4f5f0;">
+                        <th style="text-align: left; padding: 12px; font-weight: 600;">Date</th>
+                        <th style="padding: 12px; font-weight: 600;">Lot ID</th>
+                        <th style="padding: 12px; font-weight: 600;">Lot Name</th>
+                        <th style="padding: 12px; font-weight: 600;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ViewBag.PastInquiries != null)
+                    {
+                        var pastList = (List<BaleteGroveRES.Models.Admin.Inquiry>)ViewBag.PastInquiries;
+                        if (pastList.Any())
+                        {
+                            foreach (var past in pastList)
+                            {
+                                <tr style="border-bottom: 1px solid #eee;">
+                                    <td style="padding: 12px;">@past.DateSubmitted.ToString("g")</td>
+                                    <td style="padding: 12px; text-align: center;">#@past.PropertyId</td>
+                                    <td style="font-weight: 600; padding: 12px; text-align: center;">@past.Property?.PropertyName</td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        <span class="badge rounded-pill pill" style="border:none; padding:4px 10px; font-size:12px; background: @(past.Status == "Completed" ? "#d4edda" : "#ffeeba"); color: @(past.Status == "Completed" ? "#155724" : "#856404");">
+                                            @(past.Status == "Completed" ? "Paid" : "Canceled")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted" style="padding: 20px;">No past inquiries found.</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted" style="padding: 20px;">No past inquiries found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    
+    let poolEntriesPerPage = 5;
+    let poolCurrentPage = 1;
+    let poolAllRows = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const poolTbody = document.querySelector('#poolTable tbody');
+        poolAllRows = Array.from(poolTbody.getElementsByTagName('tr'));
+        if(poolAllRows.length === 1 && poolAllRows[0].innerText.includes("No pending inquiries")) {
+            poolAllRows = [];
+            document.getElementById('poolPagination').style.display = 'none';
+        } else {
+            updatePoolPagination();
+        }
+    });
+
+    function updatePoolPagination() {
+        if(poolAllRows.length === 0) return;
+        const searchValue = document.getElementById('poolSearch').value.toUpperCase();
+        const visibleRows = poolAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        const totalPages = Math.ceil(visibleRows.length / poolEntriesPerPage);
+
+        poolAllRows.forEach(row => row.style.display = 'none');
+        visibleRows.slice((poolCurrentPage - 1) * poolEntriesPerPage, poolCurrentPage * poolEntriesPerPage)
+                   .forEach(row => row.style.display = '');
+
+        document.getElementById('poolCounter').textContent = visibleRows.length + ' entries';
+        document.getElementById('poolPageInfo').textContent = `Page ${poolCurrentPage} of ${totalPages || 1}`;
+
+        document.getElementById('poolFirstBtn').disabled = poolCurrentPage === 1;
+        document.getElementById('poolPrevBtn').disabled = poolCurrentPage === 1;
+        document.getElementById('poolNextBtn').disabled = poolCurrentPage >= totalPages || totalPages === 0;
+        document.getElementById('poolLastBtn').disabled = poolCurrentPage >= totalPages || totalPages === 0;
+    }
+
+    function filterPool() { poolCurrentPage = 1; updatePoolPagination(); }
+    function poolNextPage() { poolCurrentPage++; updatePoolPagination(); }
+    function poolPrevPage() { poolCurrentPage--; updatePoolPagination(); }
+    function poolFirstPage() { poolCurrentPage = 1; updatePoolPagination(); }
+    function poolLastPage() {
+        const searchValue = document.getElementById('poolSearch').value.toUpperCase();
+        const visibleRows = poolAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        poolCurrentPage = Math.ceil(visibleRows.length / poolEntriesPerPage) || 1;
+        updatePoolPagination();
+    }
+    function changePoolEntries() {
+        poolEntriesPerPage = parseInt(document.getElementById('poolEntries').value);
+        poolCurrentPage = 1;
+        updatePoolPagination();
+    }
+</script>

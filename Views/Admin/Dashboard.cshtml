@@ -1,0 +1,475 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<partial name="_AdminSidebar" />
+
+<style>
+    
+    * {
+        box-sizing: border-box;
+    }
+
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #f4f5f0 !important;
+    }
+
+    
+    body > .container,
+    body > .container-fluid,
+    body > main,
+    body > div:not(.dashboard-container) {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #f4f5f0 !important;
+    }
+
+    .dashboard-container {
+        margin-left: 250px;
+        width: calc(100vw - 250px);
+        max-width: calc(100vw - 250px);
+        min-height: 100vh;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        background: #f4f5f0;
+        font-family: 'Montserrat', sans-serif;
+        color: #2e4633;
+    }
+
+    @@media (max-width: 992px) {
+        .dashboard-container {
+            margin-left: 0;
+            width: 100vw;
+            max-width: 100vw;
+            padding: 15px;
+            padding-top: 70px;
+        }
+    }
+
+    .dashboard-inner {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-width: 0;
+    }
+
+    
+    .page-title {
+        font-size: clamp(22px, 3vw, 34px);
+        font-weight: 700;
+        color: #2d5234;
+        margin: 0 0 4px 0;
+    }
+
+    .page-subtitle {
+        font-size: 13px;
+        color: #6b8a72;
+        margin: 0 0 28px 0;
+    }
+
+    
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 30px;
+    }
+
+    @@media (max-width: 1200px) {
+        .kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .kpi-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .kpi-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e1e1e1;
+        border-left: 4px solid #1F5633;
+        padding: 20px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: transform 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .kpi-card i {
+        font-size: 55px;
+        color: #1F5633;
+        opacity: 0.12;
+        position: absolute;
+        right: 15px;
+        bottom: -5px;
+        z-index: 0;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .kpi-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #6b8a72;
+        margin: 0;
+        z-index: 1;
+    }
+
+    .kpi-value {
+        font-size: 30px;
+        font-weight: 700;
+        color: #2d5234;
+        margin: 0;
+        line-height: 1.1;
+        z-index: 1;
+    }
+
+    
+    .section-block {
+        margin-bottom: 28px;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2d5234;
+        margin: 0;
+    }
+
+    
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+        margin-bottom: 28px;
+    }
+
+    @@media (max-width: 1200px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e1e1e1;
+    }
+
+    .table-wrapper table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        min-width: 500px;
+    }
+
+    .table-wrapper th {
+        background: #dae3d2;
+        padding: 13px 14px;
+        color: #214c32;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .table-wrapper td {
+        padding: 14px 14px;
+        border-bottom: 1px solid #f0f0f0;
+        text-align: center;
+        font-size: 13px;
+        color: #3a5c3e;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        vertical-align: middle;
+    }
+
+    .table-wrapper tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-wrapper tbody tr:hover {
+        background: #f7faf5;
+        transition: background 0.15s;
+    }
+
+    td.text-left {
+        text-align: left;
+    }
+
+    td.empty-row {
+        text-align: center;
+        color: #92a89a;
+        font-size: 13px;
+        padding: 30px 14px;
+    }
+
+    
+    .btn-confirm,
+    .btn-reject {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: 50px;
+        border: none;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 700;
+        font-size: 11px;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.1s;
+        white-space: nowrap;
+    }
+
+    .btn-confirm {
+        background: #1F5633;
+        color: white;
+    }
+
+    .btn-reject {
+        background: #b83232;
+        color: white;
+        margin-left: 5px;
+    }
+
+    .btn-confirm:hover,
+    .btn-reject:hover {
+        opacity: 0.85;
+        transform: translateY(-1px);
+    }
+
+    
+    .availability-box {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e1e1e1;
+        padding: 24px;
+    }
+
+    .availability-box .section-title {
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .status-bar {
+        margin-bottom: 18px;
+    }
+
+    .status-bar-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        font-weight: 700;
+        color: #3a5c3e;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .progress-track {
+        height: 10px;
+        background: #eef2eb;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 6px;
+        transition: width 0.5s ease;
+    }
+
+    .progress-fill.sold    { background: #1F5633; }
+    .progress-fill.avail   { background: #8ab894; }
+    .progress-fill.reserved { background: #e6a535; }
+
+    
+    @@media (max-width: 768px) {
+        .kpi-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .kpi-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+
+        
+        <h1 class="page-title">Balete Grove Overview</h1>
+        <p class="page-subtitle">System-wide administration metrics and operations.</p>
+
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <span class="kpi-label">Total Properties</span>
+                <span class="kpi-value">@ViewBag.TotalProperties</span>
+                <i class="fas fa-city"></i>
+            </div>
+
+            <div class="kpi-card">
+                <span class="kpi-label">Active Inquiries</span>
+                <span class="kpi-value">@ViewBag.ActiveInquiries</span>
+                <i class="fas fa-envelope-open-text"></i>
+            </div>
+
+            <div class="kpi-card">
+                <span class="kpi-label">Gross Revenue</span>
+                <span class="kpi-value">₱@(((decimal)ViewBag.GrossRevenue).ToString("N0"))</span>
+                <i class="fas fa-chart-line"></i>
+            </div>
+
+            <div class="kpi-card">
+                <span class="kpi-label">Total Expenses</span>
+                <span class="kpi-value" style="color: #d9534f;">₱@(((decimal)ViewBag.TotalExpenses).ToString("N0"))</span>
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+
+            <div class="kpi-card">
+                <span class="kpi-label">Net Profit</span>
+                <span class="kpi-value" style="color: #1F5633;">₱@(((decimal)ViewBag.NetProfit).ToString("N0"))</span>
+                <i class="fas fa-piggy-bank"></i>
+            </div>
+
+            <div class="kpi-card">
+                <span class="kpi-label">Total Agents</span>
+                <span class="kpi-value">@ViewBag.TotalAgents</span>
+                <i class="fas fa-user-tie"></i>
+            </div>
+        </div>
+
+        
+        <div class="content-grid">
+
+            
+            <div class="section-block">
+                <div class="section-header">
+                    <h2 class="section-title">Pending Payment Verifications</h2>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Client Name</th>
+                                <th>Lot Name</th>
+                                <th>Date Submitted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ViewBag.PendingPayments != null && ((IEnumerable<BaleteGroveRES.Models.Admin.Client>)ViewBag.PendingPayments).Any())
+                            {
+                                foreach (var payment in ViewBag.PendingPayments as IEnumerable<BaleteGroveRES.Models.Admin.Client>)
+                                {
+                                    <tr>
+                                        <td class="text-left"><strong>@payment.Inquiry?.FullName</strong></td>
+                                        <td>@payment.Inquiry?.Property?.PropertyName</td>
+                                        <td>@payment.DateVisitationFinished?.ToString("MMM dd, yyyy")</td>
+                                        <td>
+                                            <form asp-action="ConfirmPayment" asp-controller="Admin" method="post" style="display:inline;"
+                                                  onsubmit="return confirm('Officially confirm and finalize this payment? The property will be marked as Sold.');">
+                                                <input type="hidden" name="clientId" value="@payment.Id" />
+                                                <button type="submit" class="btn-confirm">
+                                                    <i class="fas fa-check"></i> Confirm
+                                                </button>
+                                            </form>
+                                            <form asp-action="CancelPayment" asp-controller="Admin" method="post" style="display:inline;"
+                                                  onsubmit="return confirm('Cancel this payment verification request?');">
+                                                <input type="hidden" name="clientId" value="@payment.Id" />
+                                                <button type="submit" class="btn-reject">
+                                                    <i class="fas fa-times"></i> Reject
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="empty-row">No pending payments for verification.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            
+            <div class="section-block">
+                <div class="section-header">
+                    <h2 class="section-title">Property Availability</h2>
+                </div>
+                <div class="availability-box">
+                    <div class="status-bar">
+                        <div class="status-bar-label">
+                            <span>Sold</span>
+                            <span>@ViewBag.SoldPercent%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill sold" style="width: @ViewBag.SoldPercent%"></div>
+                        </div>
+                    </div>
+                    <div class="status-bar">
+                        <div class="status-bar-label">
+                            <span>Available</span>
+                            <span>@ViewBag.AvailablePercent%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill avail" style="width: @ViewBag.AvailablePercent%"></div>
+                        </div>
+                    </div>
+                    <div class="status-bar">
+                        <div class="status-bar-label">
+                            <span>Reserved</span>
+                            <span>@ViewBag.ReservedPercent%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill reserved" style="width: @ViewBag.ReservedPercent%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>

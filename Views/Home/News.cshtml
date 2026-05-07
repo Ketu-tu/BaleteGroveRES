@@ -1,0 +1,65 @@
+﻿@model List<BaleteGroveRES.Models.Admin.CommunityNews>
+
+@{
+    ViewData["Title"] = "Community News";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/home-news.css">
+
+<partial name="_NavBar" />
+
+<section class="news-header">
+    <h1>Community News</h1>
+    <p>Updates, announcements, and warm stories from Balete Grove Real Estate.</p>
+</section>
+
+<div class="divider"><div class="divider-line"></div></div>
+
+<section class="news-grid">
+
+    @if (Model != null && Model.Any())
+    {
+        foreach (var news in Model)
+        {
+            <div class="news-card">
+                <div class="news-img-container">
+                    @if (!string.IsNullOrEmpty(news.ImagePath))
+                    {
+                        <img src="@news.ImagePath" alt="News Image" class="news-img" />
+                    }
+                    else
+                    {
+                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #dae3d2; color: #366642;">
+                            <i class="fa-solid fa-image fa-2x"></i>
+                        </div>
+                    }
+                </div>
+
+                <div class="news-content">
+                    <p class="news-date">
+                        @news.DateAdded.ToLocalTime().ToString("MMMM dd, yyyy")
+                    </p>
+
+                    <h2 class="news-title">
+                        @news.Headline
+                    </h2>
+
+                    <p class="news-description">
+                        @news.Information
+                    </p>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <p style="text-align:center; width:100%;">No news available.</p>
+    }
+
+</section>
+
+<div class="divider"><div class="divider-line"></div></div>
+
+<partial name="_Footer" />

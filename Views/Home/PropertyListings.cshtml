@@ -1,0 +1,564 @@
+@model List<BaleteGroveRES.Models.Admin.Property>
+@Html.AntiForgeryToken()
+
+@{
+    ViewData["Title"] = "Properties";
+}
+
+<link rel="stylesheet" href="~/css/home-propertylistings.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+    
+    .property-modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(45, 82, 52, 0.5);
+        backdrop-filter: blur(4px);
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    
+    .property-modal-content {
+        background: #f4f5f0;
+        padding: 30px 25px;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 900px;
+        position: relative;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        color: #234e33;
+    }
+
+    .close-property-modal {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 24px;
+        cursor: pointer;
+        color: #234e33;
+        font-weight: bold;
+    }
+
+    
+    .modal-layout-container {
+        display: flex;
+        gap: 30px;
+    }
+
+    
+    .modal-image-column {
+        flex: 1.2;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .modal-main-image-container {
+        width: 100%;
+        aspect-ratio: 4/3;
+        background: #e0e0e0;
+        border-radius: 15px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .modal-main-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .modal-extra-images-grid {
+        display: flex;
+        gap: 10px;
+    }
+
+    .extra-img-slot {
+        flex: 1;
+        aspect-ratio: 1/1;
+        background: #e0e0e0;
+        border-radius: 12px;
+        cursor: pointer;
+        overflow: hidden;
+        border: 2px solid transparent;
+        transition: 0.2s;
+    }
+
+        .extra-img-slot:hover {
+            border-color: #366642;
+        }
+
+        .extra-img-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    
+    .modal-info-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-prop-name {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        color: #234e33;
+    }
+
+    .modal-prop-price {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #366642;
+    }
+
+    .modal-prop-desc {
+        font-size: 15px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding-right: 10px;
+        color: #234e33;
+    }
+
+    .modal-prop-type-label {
+        font-size: 18px;
+        font-weight: 700;
+        margin-top: 10px;
+        color: #234e33;
+    }
+
+    
+    .meta-info {
+        font-size: 12px;
+        opacity: 0.8;
+        margin-top: 10px;
+        display: flex;
+        gap: 20px;
+        border-top: 1px solid rgba(35, 78, 51, 0.2);
+        padding-top: 10px;
+        color: #234e33;
+    }
+
+    
+    .modal-action-row {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .btn-ui {
+        padding: 10px 20px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Montserrat', sans-serif;
+        transition: 0.2s;
+    }
+
+    .btn-primary {
+        background: #366642;
+        color: white;
+    }
+
+        .btn-primary:hover {
+            background: #2f5a39;
+        }
+
+    .btn-secondary {
+        background: #999;
+        color: white;
+    }
+
+        .btn-secondary:hover {
+            background: #777;
+        }
+
+    @@media (max-width: 600px) {
+        .property-modal
+
+    {
+        padding: 10px;
+        align-items: flex-start;
+        overflow-y: auto;
+    }
+
+    .property-modal-content {
+        padding: 20px 15px;
+        border-radius: 14px;
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    .modal-layout-container {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .modal-main-image-container {
+        aspect-ratio: 16/9;
+    }
+
+    .modal-prop-name {
+        font-size: 20px;
+    }
+
+    .modal-prop-price {
+        font-size: 18px;
+    }
+
+    .modal-prop-desc {
+        font-size: 13px;
+        max-height: 120px;
+    }
+
+    .modal-prop-type-label {
+        font-size: 15px;
+    }
+
+    .modal-action-row {
+        justify-content: stretch;
+    }
+
+        .modal-action-row .btn-ui {
+            flex: 1;
+            text-align: center;
+        }
+
+    }
+</style>
+
+<partial name="_NavBar" />
+
+<section class="properties-section">
+    <h2 class="property-title">Properties</h2>
+    <div class="property-grid">
+        @foreach (var item in Model)
+        {
+            var statuses = ViewBag.PropertyStatuses as Dictionary<int, string>;
+            var propStatus = statuses != null && statuses.ContainsKey(item.Id) ? statuses[item.Id] : "Available";
+            
+            if (propStatus == "Owned" || propStatus == "Reserved")
+            {
+                <div class="property-card" style="cursor: not-allowed; opacity: 0.85;">
+                    <div class="property-image" style="background-image:url('@item.PropertyImage');">
+                        <span class="property-type-badge">@item.Type</span>
+                    </div>
+                    <div class="property-name">@item.PropertyName</div>
+                    <div class="property-price">₱@item.Price.ToString("N0")</div>
+                    
+                    @if (propStatus == "Owned")
+                    {
+                        <button class="btn-details" style="background: #999; border-color: #999; cursor: not-allowed;" disabled>
+                            SOLD
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn-details" style="background: #c47f00; border-color: #c47f00; cursor: not-allowed;" disabled>
+                            RESERVED
+                        </button>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="property-card" onclick="viewPropertyDetails(@item.Id)">
+                    <div class="property-image" style="background-image:url('@item.PropertyImage');">
+                        <span class="property-type-badge">@item.Type</span>
+                    </div>
+                    <div class="property-name">@item.PropertyName</div>
+                    <div class="property-price">₱@item.Price.ToString("N0")</div>
+                    <button class="btn-details" onclick="event.stopPropagation(); viewPropertyDetails(@item.Id)">
+                        VIEW DETAILS
+                    </button>
+                </div>
+            }
+        }
+    </div>
+</section>
+
+<div id="propertyModal" class="property-modal">
+    <div class="property-modal-content">
+        <span class="close-property-modal" onclick="closePropertyModal()">&times;</span>
+
+        <div class="modal-layout-container">
+            <div class="modal-image-column">
+                <div class="modal-main-image-container" style="position:relative;">
+                    <img id="modalMainImage" src="/images/placeholder.jpg" alt="Property" loading="lazy">
+                    <button id="prevBtn" onclick="prevImage()" style="
+    position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    background:#366642; color:white; border:none; padding:10px;
+    border-radius:50%; cursor:pointer;">
+                        ❮
+                    </button>
+
+                    <button id="nextBtn" onclick="nextImage()" style="
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    background:#366642; color:white; border:none; padding:10px;
+    border-radius:50%; cursor:pointer;">
+                        ❯
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-info-column">
+                <div id="modalPropertyName" class="modal-prop-name">Property Name</div>
+                <div id="modalPropertyPrice" class="modal-prop-price">₱0,000,000</div>
+                <div id="modalPropertyDetails" class="modal-prop-desc">Description goes here...</div>
+
+                <div id="modalPropertyType" class="modal-prop-type-label">Property Type</div>
+
+                <div class="meta-info">
+                    <span>Listed: <b id="modalDateCreated">--/--/--</b></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-action-row" id="defaultActionRow">
+            <button class="btn-ui btn-primary" onclick="showInquiryForm()">Inquire</button>
+            <button class="btn-ui btn-secondary" onclick="closePropertyModal()">Back</button>
+        </div>
+
+        <div id="inquiryFormSection" style="display:none; margin-top:20px; border-top:1px solid #ccc; padding-top:20px;">
+            <h3 style="color:#234e33; margin-bottom:10px;">Submit Inquiry</h3>
+            <form id="propertyInquiryForm">
+                <input type="hidden" id="inqPropertyId" name="PropertyId" />
+                <div style="margin-bottom:10px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Full Name *</label>
+                    <input type="text" name="FullName" required style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; font-family:'Montserrat';"/>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Email Address *</label>
+                    <input type="email" name="Email" pattern="^[a-zA-Z0-9._%+\-]+&#64;[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address (e.g., name@example.com)" required style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; font-family:'Montserrat';"/>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Reason for Inquiring *</label>
+                    <div style="margin-bottom: 10px; font-family:'Montserrat';">
+                        <label style="margin-right: 15px;"><input type="radio" name="InquiryType" value="I want to buy." required> I want to buy.</label>
+                        <label><input type="radio" name="InquiryType" value="I would like to inquire."> I would like to inquire.</label>
+                    </div>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Other Reasons:</label>
+                    <textarea name="OtherReason" rows="3" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; font-family:'Montserrat';"></textarea>
+                </div>
+                <div class="modal-action-row" style="margin-top:15px;">
+                    <button type="submit" class="btn-ui btn-primary">Submit request</button>
+                    <button type="button" class="btn-ui btn-secondary" onclick="hideInquiryForm()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="customAlertModal" class="property-modal" style="z-index: 3000;">
+    <div class="property-modal-content" style="max-width: 400px; text-align: center; padding: 40px 30px;">
+        <h2 id="customAlertTitle" style="color: #234e33; margin-top: 0; margin-bottom: 15px; font-weight: 700;">Notification</h2>
+        <p id="customAlertMessage" style="color: #234e33; margin-bottom: 25px; line-height: 1.5; font-size: 15px;"></p>
+        <div style="display: flex; justify-content: center;">
+            <button type="button" class="btn-ui" style="background: #234e33; color: white; padding: 10px 40px;" onclick="closeCustomAlert()">Back</button>
+        </div>
+    </div>
+</div>
+
+<partial name="_Footer" />
+
+<script>
+    let currentImages = [];
+    let currentIndex = 0;
+    let alertSuccessCallback = null;
+
+    function showCustomAlert(title, message, closeMainModalOnBack) {
+        document.getElementById('customAlertTitle').textContent = title;
+        document.getElementById('customAlertMessage').textContent = message;
+        document.getElementById('customAlertModal').style.display = 'flex';
+        
+        alertSuccessCallback = closeMainModalOnBack ? closePropertyModal : null;
+    }
+
+    function closeCustomAlert() {
+        document.getElementById('customAlertModal').style.display = 'none';
+        if (alertSuccessCallback) {
+            alertSuccessCallback();
+            alertSuccessCallback = null;
+        }
+    }
+
+    function viewPropertyDetails(id) {
+        fetch(`/Home/GetPropertyDetails?id=${id}`)
+            .then(res => res.json())
+            .then(data => {
+
+                
+                document.getElementById('propertyModal').style.display = 'flex';
+                
+                
+                document.getElementById('inqPropertyId').value = data.id;
+                hideInquiryForm();
+
+                
+                document.getElementById('modalPropertyName').textContent = data.propertyName || "Property";
+                document.getElementById('modalPropertyType').textContent = data.type;
+                document.getElementById('modalPropertyPrice').textContent = "₱" + Number(data.price).toLocaleString();
+                document.getElementById('modalPropertyDetails').textContent = data.details;
+
+                if (data.dateCreated) {
+                    document.getElementById('modalDateCreated').textContent =
+                        new Date(data.dateCreated).toLocaleDateString();
+                }
+
+                
+                const placeholder = '/images/placeholder.jpg';
+
+                
+                currentImages = [
+                    data.propertyImage,
+                    data.extraImage1,
+                    data.extraImage2,
+                    data.extraImage3
+                ].filter(x => x && x.trim() !== "");
+
+                if (currentImages.length === 0) {
+                    currentImages = [placeholder];
+                }
+
+                currentIndex = 0;
+                updateCarousel();
+
+
+                
+                fetch('/Home/TrackClick', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `id=${id}`
+                })
+                .then(res => res.json())
+                .then(result => console.log("Click tracked:", result))
+                .catch(err => console.error("Click error:", err));
+
+            })
+            .catch(err => console.error("Error loading property details:", err));
+    }
+
+    
+    function updateCarousel() {
+        document.getElementById('modalMainImage').src = currentImages[currentIndex];
+            
+    const nextIndex = (currentIndex + 1) % currentImages.length;
+    const img = new Image();
+    img.src = currentImages[nextIndex];
+
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        
+        if (currentImages.length <= 1) {
+            prevBtn.style.display = "none";
+            nextBtn.style.display = "none";
+        } else {
+            prevBtn.style.display = "block";
+            nextBtn.style.display = "block";
+        }
+    }
+    function nextImage() {
+        currentIndex = (currentIndex + 1) % currentImages.length;
+        updateCarousel();
+    }
+
+    function prevImage() {
+        currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+        updateCarousel();
+    }
+
+
+
+    function closePropertyModal() {
+        document.getElementById('propertyModal').style.display = 'none';
+    }
+
+    function showInquiryForm() {
+        document.getElementById('defaultActionRow').style.display = 'none';
+        document.getElementById('inquiryFormSection').style.display = 'block';
+    }
+
+    function hideInquiryForm() {
+        document.getElementById('defaultActionRow').style.display = 'flex';
+        document.getElementById('inquiryFormSection').style.display = 'none';
+        document.getElementById('propertyInquiryForm').reset();
+    }
+
+    document.getElementById('propertyInquiryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        const email = formData.get('Email');
+        const emailRegex = /^[a-zA-Z0-9._%+\-]+\x40[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(email)) {
+            showCustomAlert("Invalid Email", "Please enter a valid email address (e.g., name@example.com).", false);
+            return;
+        }
+
+        const inquiryType = formData.get('InquiryType');
+        const otherReason = formData.get('OtherReason').trim();
+        const combinedReason = otherReason ? `${inquiryType} - ${otherReason}` : inquiryType;
+        
+        formData.append('Reason', combinedReason);
+        formData.append('PhoneNumber', 'N/A');
+        formData.delete('InquiryType');
+        formData.delete('OtherReason');
+        
+        fetch('/Home/SubmitInquiry', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                showCustomAlert("Success", "Thank you! Your inquiry has been submitted and agents have been notified.", true);
+            } else {
+                showCustomAlert("Error", data.message, false);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showCustomAlert("Error", "An error occurred while submitting.", false);
+        });
+    });
+
+    
+    window.onclick = function (event) {
+        if (event.target === document.getElementById('customAlertModal')) closeCustomAlert();
+        else if (event.target === document.getElementById('propertyModal')) closePropertyModal();
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            if (document.getElementById('customAlertModal').style.display === 'flex') {
+                closeCustomAlert();
+            } else {
+                closePropertyModal();
+            }
+        }
+    });
+</script>

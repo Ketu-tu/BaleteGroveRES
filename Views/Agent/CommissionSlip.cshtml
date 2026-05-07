@@ -1,0 +1,323 @@
+@model BaleteGroveRES.Models.Admin.TransactionLedger
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Commission Slip - @Model.ReferenceNumber</title>
+    <link rel="icon" type="image/jpeg" href="~/images/Logo.jpg" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 40px;
+            color: #333;
+            background: #ebf0ec;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #366642;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .logo-area {
+            color: #366642;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+            .logo-area img {
+                height: 55px;
+                width: auto;
+            }
+
+            .logo-area h1 {
+                margin: 0;
+                font-weight: 700;
+                font-size: 28px;
+                color: #366642;
+            }
+
+        .doc-title {
+            text-align: right;
+        }
+
+            .doc-title h2 {
+                margin: 0;
+                color: #2e4633;
+                font-size: 22px;
+            }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .detail-box {
+            background: #fcfdfc;
+            padding: 20px;
+            border: 1px solid #e1e8e3;
+            border-radius: 8px;
+        }
+
+            .detail-box p {
+                margin: 8px 0;
+                font-size: 14px;
+            }
+
+        .table-area {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+            .table-area th, .table-area td {
+                text-align: left;
+                padding: 15px;
+                border-bottom: 1px solid #eee;
+            }
+
+            .table-area th {
+                background: #f4f7f5;
+                color: #1a3321;
+                font-weight: 600;
+                font-size: 14px;
+            }
+
+        .total-area {
+            text-align: right;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            color: #366642;
+            background: #f4f7f5;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .action-btn {
+            display: inline-block;
+            background: #366642;
+            color: #fff;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+            .action-btn:hover {
+                background: #234e33;
+            }
+
+        .back-btn {
+            display: inline-block;
+            background: transparent;
+            color: #366642;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            border: 2px solid #366642;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+            .back-btn:hover {
+                background: #366642;
+                color: #fff;
+            }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-top: 50px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            line-height: 1.6;
+        }
+
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 100px;
+            color: rgba(54, 102, 66, 0.03);
+            font-weight: 800;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 0;
+        }
+
+        @@media print {
+            body {
+                padding: 0;
+                background: #fff;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="max-width: 800px; margin: 0 auto;">
+
+        
+        <div class="no-print" style="margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+            <button onclick="downloadPDF()" class="action-btn">
+                <i class="fas fa-print"></i> Download PDF Receipt
+            </button>
+            <a href="/Agent/AgentDashboard" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="container" id="slipContent">
+
+            
+            <div class="header">
+                <div class="logo-area">
+                    <img src="/images/Logo.jpg" alt="Balete Grove Logo">
+                    <div>
+                        <h1>Balete Grove</h1>
+                        <div style="font-size: 13px; margin-top: 5px; color:#555; font-weight: 500;">PREMIUM REAL ESTATE</div>
+                    </div>
+                </div>
+                <div class="doc-title">
+                    <h2>COMMISSION SLIP</h2>
+                    <div style="font-size: 14px; color:#666; margin-top:8px;">Date: @Model.TransactionDate.ToString("MMMM dd, yyyy")</div>
+                    <div style="font-size: 14px; color:#666;">Slip ID: @Model.ReferenceNumber</div>
+                </div>
+            </div>
+
+            
+            <div class="details-grid">
+                <div class="detail-box">
+                    <strong style="color:#1a3321; display:flex; align-items:center; gap:8px; margin-bottom:15px; font-size:15px; text-transform:uppercase; letter-spacing:1px;">
+                        <i class="fa-regular fa-user"></i> Agent Details
+                    </strong>
+                    <p><strong>Name:</strong> @(Model.Agent?.UserName ?? "N/A")</p>
+                    <p><strong>Email:</strong> @(Model.Agent?.Email ?? "N/A")</p>
+                    <p><strong>Transaction Date:</strong> @Model.TransactionDate.ToString("MMM dd, yyyy")</p>
+                </div>
+                <div class="detail-box">
+                    <strong style="color:#1a3321; display:flex; align-items:center; gap:8px; margin-bottom:15px; font-size:15px; text-transform:uppercase; letter-spacing:1px;">
+                        <i class="fa-solid fa-house"></i> Transaction Details
+                    </strong>
+                    <p><strong>Buyer Name:</strong> @Model.BuyerName</p>
+                    <p><strong>Property:</strong> @Model.Property?.PropertyName</p>
+                    <p><strong>Property Type:</strong> @Model.Property?.Type</p>
+                </div>
+            </div>
+
+            
+            <table class="table-area">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Property Details</th>
+                        <th style="text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <span style="color:#333; font-weight:500;">Commission Earned (5%)</span><br>
+                            <small style="color:#888;">For successful sale facilitation</small>
+                        </td>
+                        <td>
+                            <span style="color:#555;">@Model.Property?.PropertyName (@Model.Property?.Type)</span><br>
+                            <small style="color:#888;">Sale Price: ₱@Model.SaleAmount.ToString("N2")</small>
+                        </td>
+                        <td style="text-align: right; color:#366642; font-weight:600;">₱@Model.CommissionAmount.ToString("N2")</td>
+                    </tr>
+                    <tr>
+                        <td style="color:#666;">Tax (0.00%)</td>
+                        <td></td>
+                        <td style="text-align: right; color:#555;">₱0.00</td>
+                    </tr>
+                    <tr>
+                        <td style="color:#666;">Total Deductions</td>
+                        <td></td>
+                        <td style="text-align: right; color:#555;">₱0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            
+            <div class="total-area">
+                TOTAL COMMISSION PAID: ₱@Model.CommissionAmount.ToString("N2")
+            </div>
+
+            
+            <div style="margin-bottom: 30px; font-size: 14px; line-height: 1.8; color: #555;">
+                <p>This document confirms the commission payment processed on <strong>@Model.TransactionDate.ToString("MMMM dd, yyyy")</strong> for the successful facilitation of the property sale detailed above. The stated commission amount has been duly credited to the agent's account.</p>
+                <p>For inquiries regarding this commission slip or other transactions, please contact the Balete Grove administration office.</p>
+            </div>
+
+            <div class="footer">
+                &copy; @DateTime.Now.Year Balete Grove Real Estate System. All Rights Reserved.<br />
+                This is a system-generated commission slip. No physical signature is required for validity.
+            </div>
+
+            <div class="watermark">CONFIRMED</div>
+        </div>
+    </div>
+
+    <script>
+        function downloadPDF() {
+            var element = document.getElementById('slipContent');
+            var opt = {
+                margin: 10,
+                filename: 'Commission_Slip_@(Model.ReferenceNumber).pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<style>
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(45, 82, 52, 0.5); 
+        backdrop-filter: blur(4px); 
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    
+    .modal-content {
+        background: #f4f5f0;
+        padding: 30px;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 450px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+        .modal-content h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #2d5234;
+            font-weight: 700;
+            font-size: 24px;
+        }
+
+    .modal-form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .modal-content input[type="file"] {
+        padding: 12px 18px;
+        border-radius: 50px;
+        border: 1.5px solid #b8c795;
+        background: white;
+    }
+
+    .modal-button-group {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .modal-btn {
+        padding: 10px 24px;
+        border-radius: 50px;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+        .modal-btn.add {
+            background: #366642;
+            color: white;
+        }
+
+        .modal-btn.delete {
+            background: #c94c4c;
+            color: white;
+        }
+
+        .modal-btn.cancel {
+            background: #999;
+            color: white;
+        }
+
+    .close-x {
+        position: absolute;
+        top: 20px;
+        right: 25px;
+        font-size: 24px;
+        cursor: pointer;
+    }
+</style>
+
+
+<div id="addGalleryModal" class="modal">
+    <div class="modal-content">
+        <span class="close-x" onclick="closeModal('addGalleryModal')">&times;</span>
+        <h2>Upload Image</h2>
+
+        
+        <form asp-action="AddGallery" asp-controller="Admin" method="post" enctype="multipart/form-data">
+            <div class="modal-form-group">
+                <input type="file" name="imageFile" accept="image/*" required />
+            </div>
+
+            <div class="modal-button-group">
+                <button type="button" class="modal-btn cancel" onclick="closeModal('addGalleryModal')">Cancel</button>
+                <button type="submit" class="modal-btn add">Upload Image</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div id="deleteGalleryModal" class="modal">
+    <div class="modal-content">
+        <span class="close-x" onclick="closeModal('deleteGalleryModal')">&times;</span>
+        <h2>Confirm Delete</h2>
+
+        <p>This action cannot be undone. Are you sure you want to remove this image?</p>
+
+        
+        <form asp-action="DeleteGallery" asp-controller="Admin" method="post">
+            <input type="hidden" id="deleteGalleryId" name="Id" />
+
+            <div class="modal-button-group">
+                <button type="button" class="modal-btn cancel" onclick="closeModal('deleteGalleryModal')">Cancel</button>
+                <button type="submit" class="modal-btn delete">Delete Image</button>
+            </div>
+        </form>
+    </div>
+</div>

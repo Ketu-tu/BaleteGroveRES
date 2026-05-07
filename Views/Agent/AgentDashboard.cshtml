@@ -1,0 +1,221 @@
+@model BaleteGroveRES.Views.Agent.AgentDashboardModel
+
+@{
+    ViewData["Title"] = "Agent Dashboard";
+}
+
+<link rel="stylesheet" href="~/css/agent-dashboard.css" />
+
+<partial name="~/Views/Shared/_AgentSidebar.cshtml" />
+
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+
+        
+        <h1 class="page-title">Agent Dashboard</h1>
+        <br>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <i class="fas fa-envelope-open-text"></i>
+                <p class="kpi-label">My Total Inquiries</p>
+                <p class="kpi-value">@ViewBag.TotalInquiries</p>
+            </div>
+            <div class="kpi-card">
+                <i class="fas fa-handshake"></i>
+                <p class="kpi-label">My Active Clients</p>
+                <p class="kpi-value">@ViewBag.ActiveClients</p>
+            </div>
+            <div class="kpi-card">
+                <i class="fas fa-file-signature"></i>
+                <p class="kpi-label">My Closed Deals</p>
+                <p class="kpi-value">@ViewBag.ClosedDeals</p>
+            </div>
+        </div>
+
+        
+        <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-top: 20px;">
+            
+            <div class="kpi-card" style="grid-column: span 2; align-items: flex-start; justify-content: center;">
+                <p class="kpi-label" style="font-size: 16px;"><i class="fas fa-chart-line"></i> Monthly Sales Quota</p>
+                <div style="width: 100%; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #2d5234;">
+                        <span>₱@(((decimal)(ViewBag.CurrentMonthSales ?? 0)).ToString("N0"))</span>
+                        <span>Target: ₱@(((decimal)(ViewBag.MonthlySalesQuota ?? 10000000m)).ToString("N0"))</span>
+                    </div>
+                    <div style="width: 100%; height: 14px; background: #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+                        @{
+                            decimal sales = ViewBag.CurrentMonthSales ?? 0m;
+                            decimal quota = ViewBag.MonthlySalesQuota ?? 10000000m;
+                            decimal percentage = quota > 0 ? (sales / quota) * 100 : 0;
+                            if (percentage > 100) percentage = 100;
+                            string barColor = percentage >= 100 ? "#366642" : "#5a8c66";
+                        }
+                        <div style="width: @percentage%; height: 100%; background: @barColor; transition: width 1s ease-in-out;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="kpi-card" style="background: #fff3cd; border-color: #ffeeba;">
+                <i class="fas fa-hourglass-half" style="color: #856404; background: rgba(133, 100, 4, 0.1);"></i>
+                <p class="kpi-label" style="color: #856404;">Pending Commissions</p>
+                <p class="kpi-value" style="color: #856404; font-size: 20px;">₱@(((decimal)(ViewBag.PendingCommissions ?? 0)).ToString("N0"))</p>
+            </div>
+
+            
+            <div class="kpi-card" style="background: #d4edda; border-color: #c3e6cb;">
+                <i class="fas fa-wallet" style="color: #155724; background: rgba(21, 87, 36, 0.1);"></i>
+                <p class="kpi-label" style="color: #155724;">Cleared Commissions</p>
+                <p class="kpi-value" style="color: #155724; font-size: 20px;">₱@(((decimal)(ViewBag.PaidCommissions ?? 0)).ToString("N0"))</p>
+            </div>
+        </div>
+
+        
+        <div class="section-block">
+            <div class="section-header">
+                <h2 class="section-title">My Recent Inquiries</h2>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:28%; text-align:left; padding-left:18px;">Name</th>
+                            <th style="width:32%;">Property</th>
+                            <th style="width:20%;">Status</th>
+                            <th style="width:20%;">Date Claimed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.RecentInquiries != null && ((IEnumerable<BaleteGroveRES.Models.Admin.Client>)ViewBag.RecentInquiries).Any())
+                        {
+                            foreach (var client in ViewBag.RecentInquiries as IEnumerable<BaleteGroveRES.Models.Admin.Client>)
+                            {
+                                <tr>
+                                    <td class="text-left" style="padding-left:18px; font-weight:600;">@client.Inquiry?.FullName</td>
+                                    <td>@client.Inquiry?.Property?.PropertyName</td>
+                                    <td>
+                                        @{
+                                            var statusClass = client.Status?.ToLower() switch
+                                            {
+                                                "pending" => "badge-pending",
+                                                "canceled" => "badge-canceled",
+                                                "cancelled" => "badge-canceled",
+                                                "sold" => "badge-sold",
+                                                "available" => "badge-available",
+                                                _ => "badge-available"
+                                            };
+                                        }
+                                        <span class="badge @statusClass">@client.Status</span>
+                                    </td>
+                                    <td>@client.DateAccepted.ToString("MMM dd, yyyy")</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="4" class="empty-row">No recent inquiries claimed. Start claiming inquiries!</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        
+        <div class="section-block">
+            <div class="section-header">
+                <h2 class="section-title">My Commissions &amp; Sales</h2>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:28%; text-align:left; padding-left:18px;">Lot Name</th>
+                            <th style="width:16%;">Sale Amount</th>
+                            <th style="width:16%;">Commission Earned</th>
+                            <th style="width:15%;">Ref Number</th>
+                            <th style="width:13%;">Status</th>
+                            <th style="width:12%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.Commissions != null && ((IEnumerable<BaleteGroveRES.Models.Admin.TransactionLedger>)ViewBag.Commissions).Any())
+                        {
+                            foreach (var ledger in ViewBag.Commissions as IEnumerable<BaleteGroveRES.Models.Admin.TransactionLedger>)
+                            {
+                                <tr>
+                                    <td class="text-left" style="padding-left:18px; font-weight:600;">@ledger.Property?.PropertyName</td>
+                                    <td>₱@ledger.SaleAmount.ToString("N2")</td>
+                                    <td><span class="commission-value">₱@ledger.CommissionAmount.ToString("N2")</span></td>
+                                    <td><span class="ref-number">@ledger.ReferenceNumber</span></td>
+                                    <td>
+                                        @if(ledger.IsCommissionPaid)
+                                        {
+                                            <span class="badge badge-available">Paid</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-pending">Pending</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-action="CommissionSlip" asp-controller="Agent" asp-route-ledgerId="@ledger.Id" target="_blank" class="btn-download">
+                                            <i class="fas fa-file-pdf"></i> PDF
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="6" class="empty-row">No recorded commissions yet. Finalize a sale!</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        
+        <div class="section-block">
+            <div class="section-header">
+                <h2 class="section-title">Market Tracker</h2>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:38%; text-align:left; padding-left:18px;">Property Name</th>
+                            <th style="width:18%;">Type</th>
+                            <th style="width:22%;">Price</th>
+                            <th style="width:22%;">Clicks / Views <i class="fas fa-eye"></i></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.AvailablePropertiesData != null && ((IEnumerable<BaleteGroveRES.Models.Admin.Property>)ViewBag.AvailablePropertiesData).Any())
+                        {
+                            foreach (var prop in ViewBag.AvailablePropertiesData as IEnumerable<BaleteGroveRES.Models.Admin.Property>)
+                            {
+                                <tr>
+                                    <td class="text-left" style="padding-left:18px; font-weight:600;">@prop.PropertyName</td>
+                                    <td>@prop.Type</td>
+                                    <td>₱@prop.Price.ToString("N2")</td>
+                                    <td>
+                                        <span class="badge badge-clicks">
+                                            <i class="fas fa-fire" style="margin-right:4px; font-size:10px;"></i>@prop.TotalClicks Clicks
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="4" class="empty-row">No available properties left in inventory.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>

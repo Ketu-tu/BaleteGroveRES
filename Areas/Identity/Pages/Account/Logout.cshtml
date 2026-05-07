@@ -1,0 +1,11 @@
+@page
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<BaleteGroveRES.Models.ApplicationUser> SignInManager
+@{
+    if (User.Identity?.IsAuthenticated ?? false)
+    {
+        await SignInManager.SignOutAsync();
+    }
+
+    Response.Redirect("/Identity/Account/Login");
+}

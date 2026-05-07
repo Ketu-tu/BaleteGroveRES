@@ -1,0 +1,109 @@
+@{
+    ViewData["Title"] = "Home";
+}
+
+
+<link href="~/css/home.css" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<partial name="_NavBar" />
+
+<main class="main-content">
+    <div class="content-text">
+        <h1>Homes Rooted in Care and Sustainability</h1>
+        <p>
+            Balete Grove builds more than houses — we create lasting sanctuaries that nurture families and protect nature.
+            Every home is designed with heart, built to stand the test of time, and inspired by a greener tomorrow.
+        </p>
+    </div>
+
+    <div class="carousel-container">
+        <button class="carousel-arrow prev" onclick="changeSlide(-1)">‹</button>
+
+        <div class="carousel-slide active">
+            <img src="~/images/stock-carousel (1).jpg" alt="Community Photo 1" class="carousel-image">
+        </div>
+        <div class="carousel-slide">
+            <img src="~/images/stock-carousel (2).jpg" alt="Community Photo 2" class="carousel-image">
+        </div>
+        <div class="carousel-slide">
+            <img src="~/images/stock-carousel (3).jpg" alt="Community Photo 3" class="carousel-image">
+        </div>
+
+        <button class="carousel-arrow next" onclick="changeSlide(1)">›</button>
+
+        <div class="carousel-dots">
+            <span class="dot active" onclick="goToSlide(0)"></span>
+            <span class="dot" onclick="goToSlide(1)"></span>
+            <span class="dot" onclick="goToSlide(2)"></span>
+        </div>
+    </div>
+</main>
+
+<div class="section-divider">
+    <div class="divider-line"></div>
+</div>
+
+<section class="image-first-section">
+    <div class="static-image-container">
+        <img src="~/images/stock.jpg" alt="Family" class="static-image" />
+    </div>
+
+    <div class="content-text">
+        <h1>Where Every Family Finds Its Place</h1>
+        <p>
+            From cozy starter homes to spacious family residences, Balete Grove offers spaces where dreams take root.
+            Discover a vibrant, close-knit community surrounded by nature’s calm.
+        </p>
+    </div>
+</section>
+
+<div class="section-divider">
+    <div class="divider-line"></div>
+</div>
+
+<section class="text-first-section">
+    <div class="content-text">
+        <h1>Own, or Grow Your Future Here</h1>
+        <p>
+            Whether you’re ready to invest or starting fresh, Balete Grove offers homes for sale.
+            Freedom to live the way you want, in a place built with care.
+        </p>
+    </div>
+
+    <div class="static-image-container">
+        <img src="~/images/stock2.jpg" alt="Modern Home" class="static-image" />
+    </div>
+</section>
+
+<partial name="_Footer" />
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.carousel-slide');
+    const dots = document.querySelectorAll('.dot');
+
+    function showSlide(index) {
+        if (index >= slides.length) currentSlide = 0;
+        else if (index < 0) currentSlide = slides.length - 1;
+        else currentSlide = index;
+
+        slides.forEach((slide, i) => {
+            slide.classList.remove('active');
+            dots[i].classList.remove('active');
+        });
+
+        slides[currentSlide].classList.add('active');
+        dots[currentSlide].classList.add('active');
+    }
+
+    function changeSlide(direction) {
+        showSlide(currentSlide + direction);
+    }
+
+    function goToSlide(index) {
+        showSlide(index);
+    }
+
+    setInterval(() => changeSlide(1), 5000);
+</script>

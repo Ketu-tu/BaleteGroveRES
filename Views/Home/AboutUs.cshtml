@@ -1,0 +1,102 @@
+﻿@{
+    ViewData["Title"] = "About Us";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/home-aboutus.css" asp-append-version="true" />
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<partial name="_NavBar" />
+
+<main class="about-wrapper">
+    <section class="about-section">
+        <div class="about-text">
+            <h1>About Balete Grove</h1>
+            <p>
+                Balete Grove is a sustainable and family-oriented residential community built on a foundation of care, harmony, and environmental responsibility.
+                Our vision is to create homes that nurture both families and nature, where every detail—from architecture to landscaping—reflects balance and thoughtfulness.
+            </p>
+        </div>
+        <div class="about-image-container">
+            <img src="~/images/hisstock1.jpg" alt="Balete Grove Community" class="about-image" />
+        </div>
+    </section>
+
+    <div class="divider"><div class="divider-line"></div></div>
+
+    <section class="about-section reverse">
+        <div class="about-image-container">
+            <img src="~/images/hisstock2.jpg" alt="Balete Grove History" class="about-image" />
+        </div>
+        <div class="about-text">
+            <h1>Our History</h1>
+            <p>
+                What began as a small vision of a greener, family-focused neighborhood has blossomed into one of the most respected eco-communities in the region.
+                Over the years, Balete Grove has grown alongside its residents, continuously evolving to meet the needs of modern living while preserving nature’s embrace.
+            </p>
+        </div>
+    </section>
+
+    <div class="divider"><div class="divider-line"></div></div>
+
+    <section class="about-section">
+        <div class="about-text">
+            <h1>Our Mission</h1>
+            <p>
+                To build sustainable, inclusive communities that prioritize family well-being, environmental stewardship, and long-term value.
+                We aim to provide homes that not only shelter but also inspire a meaningful way of life.
+            </p>
+        </div>
+        <div class="about-image-container">
+            <img src="~/images/hisstock3.jpg" alt="Balete Grove Mission" class="about-image" />
+        </div>
+    </section>
+
+    <div class="divider"><div class="divider-line"></div></div>
+
+    <section class="about-section reverse">
+        <div class="about-image-container">
+            <img src="~/images/hisstock4.jpg" alt="Balete Grove Vision" class="about-image" />
+        </div>
+        <div class="about-text">
+            <h1>Our Vision</h1>
+            <p>
+                To be the leading model for sustainable living communities in the Philippines, fostering harmony between people, families, and the environment—today and for generations to come.
+            </p>
+        </div>
+    </section>
+
+    <section class="core-values-section">
+        <h1 class="core-values-title">Our Core Values</h1>
+        <div class="core-values-grid">
+            <div class="value-card">
+                <div class="icon"><i class="fa-solid fa-heart"></i></div>
+                <h2>Care</h2>
+                <p>We value every family and the environment that nurtures them.</p>
+            </div>
+
+            <div class="value-card">
+                <div class="icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                <h2>Integrity</h2>
+                <p>We uphold honesty, transparency, and trust in everything we do.</p>
+            </div>
+
+            <div class="value-card">
+                <div class="icon"><i class="fa-solid fa-people-group"></i></div>
+                <h2>Community</h2>
+                <p>We foster strong relationships that grow and thrive over time.</p>
+            </div>
+
+            <div class="value-card">
+                <div class="icon"><i class="fa-solid fa-leaf"></i></div>
+                <h2>Sustainability</h2>
+                <p>We promote eco-friendly practices to ensure a better tomorrow.</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<partial name="_Footer" />

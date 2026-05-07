@@ -1,0 +1,210 @@
+@model BaleteGroveRES.Models.UserManagementViewModel
+
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/admin-usermanagement.css" asp-append-version="true">
+
+<partial name="_AdminSideBar" />
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+        <h1>User Management</h1>
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div style="background: #ffdddd; color: #d8000c; padding: 10px; margin-bottom: 20px; border-radius: 8px;">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border-radius: 8px;">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+        <div class="table-header">
+            <div class="left-controls">
+                <input type="text" placeholder="Search users..." id="userSearch" onkeyup="filterUsers()" />
+                <select id="userEntriesSelect" onchange="changeUserEntries()">
+                    <option value="5" selected>Show 5</option>
+                    <option value="10">Show 10</option>
+                </select>
+                <div class="entry-counter" id="userCounter">0 entries</div>
+            </div>
+            <div class="right-controls">
+                <button class="btn-add" onclick="openModal('addUserModal')">
+                    <i class="fa-solid fa-user-plus"></i> Add User
+                </button>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="userTable">
+                <thead>
+                    <tr>
+                        <th>Avatar</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Date Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr data-id="@user.Id" data-name="@user.FullName" data-email="@user.Email" data-role="@user.Role">
+                            <td>
+                                @if(!string.IsNullOrEmpty(user.ProfilePhotoPath)) {
+                                    <img src="@user.ProfilePhotoPath" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" />
+                                } else {
+                                    <div class="avatar">@user.FullName.Substring(0, 1)</div>
+                                }
+                            </td>
+                            <td><strong>@user.FullName</strong></td>
+                            <td>@user.Email</td>
+                            <td><span class="role-badge">@user.Role</span></td>
+                            <td><span class="status-badge">@(user.IsActive ? "Active" : "Locked")</span></td>
+                            <td>@user.DateCreated.ToString("MMM dd, yyyy")</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-icon btn-edit" onclick="prepareEditModal(this)" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn-icon btn-reset" onclick="prepareResetModal('@user.Id', '@user.FullName')" title="Reset Password"><i class="fa-solid fa-key"></i></button>
+                                    <button class="btn-icon btn-delete" onclick="prepareDeleteModal('@user.Id', '@user.FullName', @user.IsActive.ToString().ToLower())" title="@(user.IsActive ? "Deactivate" : "Reactivate")"><i class="fa-solid @(user.IsActive ? "fa-user-slash" : "fa-user-check")"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-controls">
+            <button onclick="userFirstPage()" id="userFirstBtn">First</button>
+            <button onclick="userPrevPage()" id="userPrevBtn">Prev</button>
+            <span id="userPageInfo">Page 1 of 1</span>
+            <button onclick="userNextPage()" id="userNextBtn">Next</button>
+            <button onclick="userLastPage()" id="userLastBtn">Last</button>
+        </div>
+    </div>
+</div>
+
+<partial name="~/Views/Admin/Modals/_UserModals.cshtml" />
+
+<script>
+    let userEntriesPerPage = 5;
+    let userCurrentPage = 1;
+    let userAllRows = [];
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const tbody = document.querySelector('#userTable tbody');
+        userAllRows = Array.from(tbody.getElementsByTagName('tr'));
+        updateUserPagination();
+    });
+
+    
+    function openModal(id) {
+        document.getElementById(id).style.display = "flex";
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = "none";
+    }
+
+    
+    function prepareEditModal(button) {
+        const row = button.closest('tr');
+        document.getElementById('editUserId').value   = row.getAttribute('data-id');
+        document.getElementById('editFullName').value = row.getAttribute('data-name');
+        document.getElementById('editEmail').value    = row.getAttribute('data-email');
+        document.getElementById('editRole').value     = row.getAttribute('data-role');
+        openModal('editUserModal');
+    }
+
+    
+    function prepareResetModal(id, name) {
+        document.getElementById('resetUserId').value         = id;
+        document.getElementById('resetUserName').textContent = name;
+        document.getElementById('resetNewPassword').value    = '';
+        document.getElementById('resetAdminPassword').value  = '';
+        openModal('resetPasswordModal');
+    }
+
+    
+    function prepareDeleteModal(id, name, isActive) {
+        document.getElementById('deleteUserId').value         = id;
+        document.getElementById('deleteUserName').textContent = name;
+        
+        const changeModeText = isActive ? "Deactivate" : "Reactivate";
+        document.getElementById('deleteModalTitle').textContent = changeModeText + " User";
+        document.getElementById('deleteModalActionText').textContent = changeModeText.toLowerCase();
+        
+        const btnChange = document.getElementById('deleteSubmitBtn');
+        btnChange.textContent = changeModeText;
+        if (!isActive) {
+            btnChange.classList.remove('delete');
+            btnChange.classList.add('save');
+        } else {
+            btnChange.classList.add('delete');
+            btnChange.classList.remove('save');
+        }
+        
+        openModal('deleteUserModal');
+    }
+
+    
+
+    
+    function togglePassword(inputId, btn) {
+        const passwordInput = document.getElementById(inputId);
+
+        
+        btn.innerText = "";
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            btn.className = "btn-eye fas fa-eye-slash";
+        } else {
+            passwordInput.type = "password";
+            btn.className = "btn-eye fas fa-eye";
+        }
+    }
+    
+    function updateUserPagination() {
+        const searchValue = document.getElementById('userSearch').value.toUpperCase();
+        const visibleRows = userAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        const totalPages  = Math.ceil(visibleRows.length / userEntriesPerPage);
+
+        userAllRows.forEach(row => row.style.display = 'none');
+        visibleRows
+            .slice((userCurrentPage - 1) * userEntriesPerPage, userCurrentPage * userEntriesPerPage)
+            .forEach(row => row.style.display = '');
+
+        document.getElementById('userCounter').textContent  = visibleRows.length + ' entries';
+        document.getElementById('userPageInfo').textContent = `Page ${userCurrentPage} of ${totalPages || 1}`;
+        document.getElementById('userFirstBtn').disabled    = userCurrentPage === 1;
+        document.getElementById('userPrevBtn').disabled     = userCurrentPage === 1;
+        document.getElementById('userNextBtn').disabled     = userCurrentPage >= totalPages || totalPages === 0;
+        document.getElementById('userLastBtn').disabled     = userCurrentPage >= totalPages || totalPages === 0;
+    }
+
+    function filterUsers()   { userCurrentPage = 1; updateUserPagination(); }
+    function userNextPage()  { userCurrentPage++; updateUserPagination(); }
+    function userPrevPage()  { userCurrentPage--; updateUserPagination(); }
+    function userFirstPage() { userCurrentPage = 1; updateUserPagination(); }
+    function userLastPage()  {
+        const searchValue = document.getElementById('userSearch').value.toUpperCase();
+        const visibleRows = userAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        userCurrentPage   = Math.ceil(visibleRows.length / userEntriesPerPage) || 1;
+        updateUserPagination();
+    }
+    function changeUserEntries() {
+        userEntriesPerPage = parseInt(document.getElementById('userEntriesSelect').value);
+        userCurrentPage    = 1;
+        updateUserPagination();
+    }
+</script>

@@ -1,0 +1,287 @@
+@model BaleteGroveRES.Models.AdminProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/admin-adminprofile.css" asp-append-version="true">
+
+<partial name="~/Views/Shared/_AgentSidebar.cshtml" />
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+
+        <h1 style="color: #1F5633; font-weight: 700; margin-bottom: 25px;">My Profile</h1>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert-success" style="background: #e2f0e5; color: #1F5633; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px;">✓ @TempData["Success"]</div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert-error" style="background: #ffe6e6; color: #d32f2f; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px;">⚠ @TempData["ErrorMessage"]</div>
+        }
+
+        
+        <div class="profile-card">
+            <div class="profile-identity">
+
+                
+                <form asp-action="EditAgentProfile" asp-controller="Agent"
+                      method="post" enctype="multipart/form-data" id="photoForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="UserId" value="@Model.UserId" />
+
+                    <div class="profile-avatar-wrapper"
+                         onclick="document.getElementById('photoInput').click()"
+                         title="Change photo">
+
+                        @if (!string.IsNullOrEmpty(Model.ProfilePhotoPath))
+                        {
+                            
+                            <img src="@Model.ProfilePhotoPath"
+                                 alt="Profile Photo"
+                                 class="profile-avatar"
+                                 id="avatarImg" />
+                        }
+                        else
+                        {
+                            
+                            <div class="avatar-placeholder" id="avatarPlaceholder">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     viewBox="0 0 100 100"
+                                     width="72" height="72">
+                                    <circle cx="50" cy="35" r="20" fill="#b8c795" />
+                                    <ellipse cx="50" cy="85" rx="30" ry="22" fill="#b8c795" />
+                                </svg>
+                            </div>
+                            
+                            <img src="" alt="" class="profile-avatar"
+                                 id="avatarImg" style="display:none;" />
+                        }
+
+                        <div class="avatar-overlay">Change<br />Photo</div>
+                    </div>
+
+                    <input type="file" id="photoInput" name="PhotoFile"
+                           accept="image/*" style="display:none;"
+                           onchange="previewAndSubmit(this)" />
+                </form>
+
+                <div>
+                    <p class="profile-name">
+                        @(string.IsNullOrWhiteSpace(Model.FullName) ? "No Name Set" : Model.FullName)
+                    </p>
+                    <p class="profile-role-label">@Model.Role</p>
+                </div>
+            </div>
+            @if (Model.IsOnLeave)
+            {
+                <span class="badge-active" style="background-color: #ffe6e6; color: #d32f2f;">On Leave</span>
+            }
+            else
+            {
+                <span class="badge-active">Active</span>
+            }
+        </div>
+
+        
+        <form asp-action="ToggleLeaveStatus" asp-controller="Agent" method="post" id="leaveToggleForm" style="display:none;">
+            @Html.AntiForgeryToken()
+        </form>
+
+        
+        <form asp-action="EditAgentProfile" asp-controller="Agent"
+              method="post" enctype="multipart/form-data" id="profileForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="UserId" value="@Model.UserId" />
+
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h2 class="info-card-title">Personal Information</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" form="leaveToggleForm" class="btn-edit" style="background-color: #f8f9fa; color: #333; border: 1px solid #ccc;">
+                            @if (Model.IsOnLeave)
+                            {
+                                <i class="fas fa-briefcase"></i> <span>Set as Active</span>
+                            }
+                            else
+                            {
+                                <i class="fas fa-plane-departure"></i> <span>Set as On Leave</span>
+                            }
+                        </button>
+                        <button type="button" class="btn-edit" id="editBtn" onclick="toggleEdit(true)">
+                            ✎ Edit
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+
+                    
+                    <div class="info-field">
+                        <p class="info-label">First Name</p>
+                        <p class="info-value view-mode">
+                            @(string.IsNullOrEmpty(Model.FirstName) ? "—" : Model.FirstName)
+                        </p>
+                        <input type="text" name="FirstName" value="@Model.FirstName"
+                               class="info-input edit-mode" style="display:none;" placeholder="First Name" />
+                    </div>
+
+                    
+                    <div class="info-field">
+                        <p class="info-label">Last Name</p>
+                        <p class="info-value view-mode">
+                            @(string.IsNullOrEmpty(Model.LastName) ? "—" : Model.LastName)
+                        </p>
+                        <input type="text" name="LastName" value="@Model.LastName"
+                               class="info-input edit-mode" style="display:none;" placeholder="Last Name" />
+                    </div>
+
+                    
+                    <div class="info-field">
+                        <p class="info-label">Date of Birth</p>
+                        <p class="info-value view-mode">
+                            @(Model.DateOfBirth.HasValue? Model.DateOfBirth.Value.ToString("dd-MM-yyyy") : "—")
+                        </p>
+                        <input type="date" name="DateOfBirth"
+                               value="@(Model.DateOfBirth.HasValue? Model.DateOfBirth.Value.ToString("yyyy-MM-dd") : "")"
+                               class="info-input edit-mode" style="display:none;" />
+                    </div>
+
+                    
+                    <div class="info-field">
+                        <p class="info-label">Email Address</p>
+                        <p class="info-value">@Model.Email</p>
+                        <input type="hidden" name="Email" value="@Model.Email" />
+                    </div>
+
+                    
+                    <div class="info-field">
+                        <p class="info-label">Phone Number</p>
+                        <p class="info-value view-mode">
+                            @(string.IsNullOrEmpty(Model.PhoneNumber) ? "—" : Model.PhoneNumber)
+                        </p>
+                        <input type="text" name="PhoneNumber" value="@Model.PhoneNumber"
+                               class="info-input edit-mode" style="display:none;" placeholder="+63 XX XXXX-XXXX" maxlength="17" oninput="formatPhoneNumber(this)" />
+                    </div>
+
+                    
+                    <div class="info-field">
+                        <p class="info-label">User Role</p>
+                        <p class="info-value">@Model.Role</p>
+                        <input type="hidden" name="Role" value="@Model.Role" />
+                    </div>
+
+                    
+                    <div class="info-field">
+                        <p class="info-label">Password</p>
+
+                        <p class="info-value view-mode">
+                            &#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;
+                        </p>
+
+                        <div class="password-fields edit-mode" style="display:none;">
+                            <input type="password" name="CurrentPassword"
+                                   class="info-input-password"
+                                   placeholder="Current password"
+                                   autocomplete="current-password" />
+                            <input type="password" name="NewPassword"
+                                   class="info-input-password"
+                                   placeholder="New password"
+                                   autocomplete="new-password" />
+                            <input type="password" name="ConfirmPassword"
+                                   class="info-input-password"
+                                   placeholder="Confirm new password"
+                                   autocomplete="new-password" />
+                            <p class="password-hint">Leave blank to keep current password.</p>
+                        </div>
+                    </div>
+
+                    
+                    <div class="info-field">
+                        <p class="info-label">Date Created</p>
+                        <p class="info-value">@Model.DateCreated.ToString("dd-MM-yyyy")</p>
+                    </div>
+
+                </div>
+
+                <div class="form-actions edit-mode" style="display:none;">
+                    <button type="button" class="btn-cancel" onclick="toggleEdit(false)">Cancel</button>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    function toggleEdit(on) {
+        document.querySelectorAll('.view-mode').forEach(el => el.style.display = on ? 'none' : '');
+        document.querySelectorAll('.edit-mode').forEach(el => el.style.display = on ? '' : 'none');
+        document.getElementById('editBtn').style.display = on ? 'none' : '';
+
+        
+        if (!on) {
+            document.querySelectorAll('.info-input-password').forEach(el => el.value = '');
+        }
+    }
+
+    function formatPhoneNumber(input) {
+        let raw = input.value;
+        
+        let digits = raw.replace(/\D/g, '');
+        
+        
+        if (raw !== input.value && /[a-zA-Z!@@#$%^&*_=]/.test(raw)) {
+            input.setCustomValidity("Please enter numbers only. Letters and special symbols are not allowed.");
+            input.reportValidity();
+            setTimeout(() => input.setCustomValidity(""), 2500);
+        } else {
+            input.setCustomValidity("");
+        }
+
+        
+        if (digits.length > 0 && !digits.startsWith('09')) {
+            digits = '09' + digits.substring(2);
+        }
+
+        
+        digits = digits.substring(0, 11);
+
+        
+        let formatted = '';
+        if (digits.length > 0) {
+            formatted = '+63 ';
+            let localPart = digits.substring(1); 
+            if (localPart.length > 0) {
+                formatted += localPart.substring(0, 2);
+            }
+            if (localPart.length > 2) {
+                formatted += ' ' + localPart.substring(2, 6);
+            }
+            if (localPart.length > 6) {
+                formatted += '-' + localPart.substring(6, 10);
+            }
+        }
+        
+        input.value = formatted;
+    }
+
+    function previewAndSubmit(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.getElementById('avatarImg');
+                const placeholder = document.getElementById('avatarPlaceholder');
+                if (placeholder) placeholder.style.display = 'none';
+                img.src = e.target.result;
+                img.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+            document.getElementById('photoForm').submit();
+        }
+    }
+</script>

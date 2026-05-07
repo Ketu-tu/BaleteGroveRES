@@ -1,0 +1,106 @@
+@model BaleteGroveRES.Models.Admin.Client
+
+@{
+    ViewData["Title"] = "Payment Finalization";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/agent-inquiries.css">
+
+<style>
+    .payment-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e1e1e1;
+        padding: 40px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .payment-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .payment-header i {
+        font-size: 3rem;
+        color: #366642;
+        margin-bottom: 15px;
+    }
+    .price-tag {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a3321;
+        margin: 15px 0;
+    }
+    .info-list {
+        background: #f4f5f0;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+    .info-list p {
+        margin: 8px 0;
+        font-size: 15px;
+        color: #2e4633;
+    }
+    .info-list strong {
+        color: #1a3321;
+        display: inline-block;
+        width: 140px;
+    }
+    .btn-pay {
+        width: 100%;
+        padding: 14px;
+        font-size: 16px;
+    }
+</style>
+
+<partial name="~/Views/Shared/_AgentSidebar.cshtml" />
+
+<div class="dashboard-container">
+    <div class="dashboard-inner" style="justify-content: center; align-items: center; min-height: 80vh;">
+        
+        <div class="payment-card w-100">
+            <div class="payment-header">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <h2 style="margin-bottom:5px;">Submit Payment for Verification</h2>
+                <p class="text-muted">Send this transaction to the Admin for official confirmation.</p>
+            </div>
+
+            <div class="info-list">
+                <p><strong>Client Name:</strong> @Model.Inquiry?.FullName</p>
+                <p><strong>Property ID:</strong> #@Model.Inquiry?.Property?.Id</p>
+                <p><strong>Lot Name:</strong> @Model.Inquiry?.Property?.PropertyName</p>
+            </div>
+
+            <div class="text-center">
+                <div class="text-muted" style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Total Amount Due</div>
+                <div class="price-tag">₱@Model.Inquiry?.Property?.Price.ToString("N2")</div>
+
+                <form asp-action="ProcessPayment" asp-controller="Agent" method="post" class="mt-4">
+                    <input type="hidden" name="clientId" value="@Model.Id" />
+                    <div style="display: flex; gap: 12px;">
+                        <a asp-action="Clients" asp-controller="Agent"
+                           style="flex: 1; padding: 14px; font-size: 15px; font-weight: 700;
+                  font-family: 'Montserrat', sans-serif; border-radius: 50px;
+                  background: #e8ede9; color: #2d5234; border: 1.5px solid #b8cdb9;
+                  text-decoration: none; display: flex; align-items: center;
+                  justify-content: center; gap: 8px;">
+                            <i class="fas fa-arrow-left"></i> Go Back
+                        </a>
+                        <button type="submit"
+                                style="flex: 1; padding: 14px; font-size: 15px; font-weight: 700;
+                       font-family: 'Montserrat', sans-serif; border-radius: 50px;
+                       background: #366642; color: white; border: 1.5px solid #2d5234;
+                       cursor: pointer; display: flex; align-items: center;
+                       justify-content: center; gap: 8px;">
+                            <i class="fas fa-paper-plane"></i> Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,60 @@
+@model List<BaleteGroveRES.Models.Admin.SiteSettingFAQ>
+
+@{
+    ViewData["Title"] = "Frequently Asked Questions";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="~/css/home-faqs.css">
+
+<partial name="_NavBar" />
+
+<div class="faq-header">
+    <h1>Frequently Asked Questions</h1>
+    <p>
+        Here are some of the most common questions about Balete Grove Real Estate, your privacy,
+        property purchases, tours, and account usage.
+    </p>
+</div>
+
+<div class="divider">
+    <div class="divider-line"></div>
+</div>
+
+<div class="faq-list">
+    @if (Model != null && Model.Any())
+    {
+        foreach (var faq in Model)
+        {
+            <div class="faq-item">
+                <div class="faq-question">
+                    @faq.Question
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="faq-content">
+                    @faq.Answer
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <p style="text-align:center; opacity:0.7;">
+            No FAQs available yet.
+        </p>
+    }
+</div>
+
+<partial name="_Footer" />
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    item.classList.toggle('active');
+                });
+            });
+        });
+    </script>
+}

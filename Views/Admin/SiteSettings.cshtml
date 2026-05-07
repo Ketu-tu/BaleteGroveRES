@@ -1,0 +1,155 @@
+@model List<BaleteGroveRES.Models.Admin.SiteSettingFAQ>
+
+@{
+    ViewData["Title"] = "Site Settings (FAQs)";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/admin-sitesettings.css" asp-append-version="true">
+
+<partial name="_AdminSideBar" />
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+        <h1>Site Settings - FAQs</h1>
+
+        <div class="table-header">
+            <div class="left-controls">
+                <input type="text" id="faqSearch" placeholder="Search FAQ..." onkeyup="filterFAQ()" />
+                <div class="entry-counter" id="faqCounter">0 entries</div>
+            </div>
+
+            <button class="btn-add" onclick="openModal('addFaqModal')">Add FAQ</button>
+        </div>
+
+        <div class="faq-container" id="faqContainer">
+            @foreach (var faq in Model)
+            {
+                <div class="faq-card" data-id="@faq.Id">
+                    <div class="faq-content">
+                        <div class="faq-question">@faq.Question</div>
+                        <div class="faq-answer">@faq.Answer</div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-icon btn-edit" onclick="prepareEditModal(this)">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+
+                        <button class="btn-icon btn-delete" onclick="prepareDeleteModal(@faq.Id)">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="pagination-controls">
+            <button onclick="faqFirstPage()" id="faqFirstBtn">First</button>
+            <button onclick="faqPrevPage()" id="faqPrevBtn">Prev</button>
+            <span id="pageInfo">Page 1 of 1</span>
+            <button onclick="faqNextPage()" id="faqNextBtn">Next</button>
+            <button onclick="faqLastPage()" id="faqLastBtn">Last</button>
+        </div>
+    </div>
+</div>
+
+
+<partial name="~/Views/Admin/Modals/_SiteSettingsModals.cshtml" />
+
+<script>
+    let allFAQs = [];
+    let currentPage = 1;
+    let perPage = 5;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        allFAQs = Array.from(document.querySelectorAll(".faq-card"));
+        updateFAQ();
+    });
+
+    function filterFAQ() {
+        currentPage = 1;
+        updateFAQ();
+    }
+
+    function updateFAQ() {
+        const search = document.getElementById("faqSearch").value.toUpperCase();
+
+        let filtered = allFAQs.filter(f =>
+            f.innerText.toUpperCase().includes(search)
+        );
+
+        const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+
+        
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        document.getElementById("faqCounter").innerText = filtered.length + " entries";
+
+        allFAQs.forEach(f => f.style.display = "none");
+
+        let start = (currentPage - 1) * perPage;
+        let pageItems = filtered.slice(start, start + perPage);
+
+        pageItems.forEach(f => f.style.display = "block");
+
+        document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${totalPages || 1}`;
+
+        document.getElementById('faqFirstBtn').disabled = currentPage === 1;
+        document.getElementById('faqPrevBtn').disabled = currentPage === 1;
+        document.getElementById('faqNextBtn').disabled = currentPage >= totalPages || totalPages === 0;
+        document.getElementById('faqLastBtn').disabled = currentPage >= totalPages || totalPages === 0;
+    }
+
+    function faqNextPage() {
+        currentPage++;
+        updateFAQ();
+    }
+
+    function faqPrevPage() {
+        if (currentPage > 1) currentPage--;
+        updateFAQ();
+    }
+
+    function faqFirstPage() {
+        currentPage = 1;
+        updateFAQ();
+    }
+
+    function faqLastPage() {
+        const search = document.getElementById("faqSearch").value.toUpperCase();
+        let filtered = allFAQs.filter(f => f.innerText.toUpperCase().includes(search));
+        currentPage = Math.ceil(filtered.length / perPage) || 1;
+        updateFAQ();
+    }
+
+    function openModal(id) {
+        document.getElementById(id).style.display = "flex";
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = "none";
+    }
+
+    function prepareEditModal(button) {
+        const card = button.closest('.faq-card');
+
+        const id = card.getAttribute('data-id');
+        const question = card.querySelector('.faq-question').innerText;
+        const answer = card.querySelector('.faq-answer').innerText;
+
+        document.getElementById('editFaqId').value = id;
+        document.getElementById('editQuestion').value = question;
+        document.getElementById('editAnswer').value = answer;
+
+        openModal('editFaqModal');
+    }
+
+
+
+    function prepareDeleteModal(id) {
+        document.getElementById('deleteFaqId').value = id;
+        openModal('deleteFaqModal');
+    }
+</script>

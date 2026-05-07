@@ -1,0 +1,54 @@
+@page
+@model AccessDeniedModel
+@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<link rel="stylesheet" href="~/css/identity-accessdenied.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+<div class="access-container">
+    <div class="access-card">
+
+        
+        <div class="icon-wrapper">
+            <img src="~/images/error.gif" alt="Access Denied" />
+        </div>
+
+        
+        <h1 class="error-code">ERROR 403</h1>
+        <h2 class="error-title">ACCESS DENIED</h2>
+
+        
+        <p class="error-message">
+            You do not have permission to view this resource. Please contact an
+            administrator if you believe this is an error.
+        </p>
+
+        
+        <button class="back-btn" onclick="history.back()">
+            Go Back to Previous Page
+        </button>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        
+        window.onload = function () {
+            var myModal = new bootstrap.Modal(document.getElementById('accessDeniedModal'));
+            myModal.show();
+        };
+
+        
+        function goBack() {
+            if (document.referrer !== "") {
+                window.history.back();
+            } else {
+                
+                window.location.href = "/Index";
+            }
+        }
+    </script>
+}

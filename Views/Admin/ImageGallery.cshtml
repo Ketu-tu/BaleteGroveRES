@@ -1,0 +1,180 @@
+@model List<BaleteGroveRES.Models.Admin.GalleryImage>
+
+@{
+    ViewData["Title"] = "Gallery Management";
+}
+
+<link rel="stylesheet" href="~/css/admin-imagegallery.css" asp-append-version="true">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<partial name="_AdminSidebar" />
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+        <h1>Gallery Management</h1>
+
+        <div class="table-header">
+            <div class="left-controls">
+                <input type="text" placeholder="Search by date..." id="gallerySearch" onkeyup="filterGallery()" />
+                <select id="galleryEntriesSelect" onchange="changeGalleryEntries()">
+                    <option value="5" selected>Show 5</option>
+                    <option value="10">Show 10</option>
+                    <option value="20">Show 20</option>
+                </select>
+                <div class="entry-counter" id="galleryCounter">0 entries</div>
+            </div>
+            <div class="right-controls">
+                <button class="btn-add" onclick="openModal('addGalleryModal')">
+                    <i class="fa-solid fa-plus"></i> ADD NEW IMAGE
+                </button>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="galleryTable">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Date Added</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <img src="@item.ImagePath" alt="Gallery Image" class="gallery-img" loading="lazy" />
+                                </td>
+                                <td>@item.DateAdded.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon btn-delete" onclick="openDeleteGalleryModal(@item.Id)">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" style="text-align:center; padding: 40px; color: #666;">
+                                No images found in the gallery.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-controls">
+            <button onclick="galleryFirstPage()" id="galleryFirstBtn">First</button>
+            <button onclick="galleryPrevPage()" id="galleryPrevBtn">Prev</button>
+            <span id="galleryPageInfo">Page 1 of 1</span>
+            <button onclick="galleryNextPage()" id="galleryNextBtn">Next</button>
+            <button onclick="galleryLastPage()" id="galleryLastBtn">Last</button>
+        </div>
+    </div>
+</div>
+
+<partial name="Modals/_GalleryModals" />
+
+<script>
+    
+    function openModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.style.display = "flex";
+        }
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    
+    function openDeleteGalleryModal(id) {
+        const input = document.getElementById('deleteGalleryId');
+        if (input) {
+            input.value = id;
+            openModal('deleteGalleryModal');
+        }
+    }
+
+    
+
+    
+    let galleryEntriesPerPage = 5;
+    let galleryCurrentPage = 1;
+    let galleryAllRows = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const tbody = document.querySelector('#galleryTable tbody');
+        
+        galleryAllRows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.cells.length > 1);
+        updateGalleryPagination();
+    });
+
+    function updateGalleryPagination() {
+        const searchValue = document.getElementById('gallerySearch').value.toUpperCase();
+        const visibleRows = galleryAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        const totalPages = Math.ceil(visibleRows.length / galleryEntriesPerPage) || 1;
+
+        if (galleryCurrentPage > totalPages) galleryCurrentPage = totalPages;
+
+        const startIndex = (galleryCurrentPage - 1) * galleryEntriesPerPage;
+        const endIndex = startIndex + galleryEntriesPerPage;
+
+        galleryAllRows.forEach(row => row.style.display = 'none');
+        visibleRows.forEach((row, index) => {
+            if (index >= startIndex && index < endIndex) row.style.display = '';
+        });
+
+        document.getElementById('galleryCounter').textContent = visibleRows.length + ' entries';
+        document.getElementById('galleryPageInfo').textContent = `Page ${galleryCurrentPage} of ${totalPages || 1}`;
+
+        document.getElementById('galleryFirstBtn').disabled = galleryCurrentPage === 1;
+        document.getElementById('galleryPrevBtn').disabled = galleryCurrentPage === 1;
+        document.getElementById('galleryNextBtn').disabled = galleryCurrentPage >= totalPages || totalPages === 0;
+        document.getElementById('galleryLastBtn').disabled = galleryCurrentPage >= totalPages || totalPages === 0;
+    }
+
+    function filterGallery() {
+        galleryCurrentPage = 1;
+        updateGalleryPagination();
+    }
+
+    function changeGalleryEntries() {
+        galleryEntriesPerPage = parseInt(document.getElementById('galleryEntriesSelect').value);
+        galleryCurrentPage = 1;
+        updateGalleryPagination();
+    }
+
+    function galleryNextPage() { galleryCurrentPage++; updateGalleryPagination(); }
+    function galleryPrevPage() { galleryCurrentPage--; updateGalleryPagination(); }
+    function galleryFirstPage() { galleryCurrentPage = 1; updateGalleryPagination(); }
+    function galleryLastPage() {
+        const searchValue = document.getElementById('gallerySearch').value.toUpperCase();
+        const visibleRowsCount = galleryAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue)).length;
+        galleryCurrentPage = Math.ceil(visibleRowsCount / galleryEntriesPerPage) || 1;
+        updateGalleryPagination();
+    }
+
+        document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll('.gallery-img').forEach(img => {
+            if (img.complete) {
+                img.classList.add('loaded');
+            } else {
+                img.onload = () => img.classList.add('loaded');
+            }
+        });
+    });
+</script>

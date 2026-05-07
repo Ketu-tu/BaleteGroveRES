@@ -1,0 +1,161 @@
+@model List<BaleteGroveRES.Models.Admin.CommunityNews>
+
+@{
+    ViewData["Title"] = "Community News Management";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/admin-communitynews.css">
+
+<partial name="_AdminSideBar" />
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+        <h1>Community News</h1>
+        <div class="table-header">
+            <div class="left-controls">
+                <input type="text" placeholder="Search news..." id="newsSearch" onkeyup="filterNews()" />
+                <select id="newsEntriesSelect" onchange="changeNewsEntries()">
+                    <option value="5" selected>Show 5</option>
+                    <option value="10">Show 10</option>
+                </select>
+                <div class="entry-counter" id="newsCounter">0 entries</div>
+            </div>
+            <div class="right-controls">
+                <button class="btn-add" onclick="openModal('addNewsModal')">Add News</button>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table id="newsTable">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Date Added</th>
+                        <th>Headline</th>
+                        <th>Information</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var news in Model)
+                    {
+                        <tr data-id="@news.Id">
+                            <td>
+                                @if (!string.IsNullOrEmpty(news.ImagePath))
+                                {
+                                    <img src="@news.ImagePath" width="50" />
+                                }
+                                else
+                                {
+                                    <span>No Image</span>
+                                }
+                            </td>
+                            <td>@news.DateAdded.ToString("MMM dd, yyyy")</td>
+                            <td class="col-headline"><strong>@news.Headline</strong></td>
+                            <td class="col-info">@news.Information</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-icon btn-edit" onclick="prepareEditModal(this)" title="Edit">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button class="btn-icon btn-delete" onclick="prepareDeleteModal(@news.Id)" title="Delete">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-controls">
+            <button onclick="newsFirstPage()" id="newsFirstBtn">First</button>
+            <button onclick="newsPrevPage()" id="newsPrevBtn">Prev</button>
+            <span id="newsPageInfo">Page 1 of 1</span>
+            <button onclick="newsNextPage()" id="newsNextBtn">Next</button>
+            <button onclick="newsLastPage()" id="newsLastBtn">Last</button>
+        </div>
+    </div>
+</div>
+
+<partial name="~/Views/Admin/Modals/_NewsModals.cshtml" />
+
+<script>
+    let newsEntriesPerPage = 5;
+    let newsCurrentPage = 1;
+    let newsAllRows = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const tbody = document.querySelector('#newsTable tbody');
+        newsAllRows = Array.from(tbody.getElementsByTagName('tr'));
+        updateNewsPagination();
+    });
+
+    
+    function openModal(id) {
+        document.getElementById(id).style.display = "flex";
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = "none";
+    }
+
+    
+    function prepareEditModal(button) {
+        const row = button.closest('tr');
+        const id = row.getAttribute('data-id');
+        const headline = row.querySelector('.col-headline').innerText;
+        const info = row.querySelector('.col-info').innerText;
+
+        document.getElementById('editNewsId').value = id;
+        document.getElementById('editHeadline').value = headline;
+        document.getElementById('editInformation').value = info;
+
+        openModal('editNewsModal');
+    }
+
+    
+    function prepareDeleteModal(id) {
+        document.getElementById('deleteNewsId').value = id;
+        openModal('deleteNewsModal');
+    }
+
+    
+
+    
+    function updateNewsPagination() {
+        const searchValue = document.getElementById('newsSearch').value.toUpperCase();
+        const visibleRows = newsAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        const totalPages = Math.ceil(visibleRows.length / newsEntriesPerPage);
+
+        newsAllRows.forEach(row => row.style.display = 'none');
+        visibleRows.slice((newsCurrentPage - 1) * newsEntriesPerPage, newsCurrentPage * newsEntriesPerPage)
+                   .forEach(row => row.style.display = '');
+
+        document.getElementById('newsCounter').textContent = visibleRows.length + ' entries';
+        document.getElementById('newsPageInfo').textContent = `Page ${newsCurrentPage} of ${totalPages || 1}`;
+
+        document.getElementById('newsFirstBtn').disabled = newsCurrentPage === 1;
+        document.getElementById('newsPrevBtn').disabled = newsCurrentPage === 1;
+        document.getElementById('newsNextBtn').disabled = newsCurrentPage >= totalPages || totalPages === 0;
+        document.getElementById('newsLastBtn').disabled = newsCurrentPage >= totalPages || totalPages === 0;
+    }
+
+    function filterNews() { newsCurrentPage = 1; updateNewsPagination(); }
+    function newsNextPage() { newsCurrentPage++; updateNewsPagination(); }
+    function newsPrevPage() { newsCurrentPage--; updateNewsPagination(); }
+    function newsFirstPage() { newsCurrentPage = 1; updateNewsPagination(); }
+    function newsLastPage() {
+        const searchValue = document.getElementById('newsSearch').value.toUpperCase();
+        const visibleRows = newsAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        newsCurrentPage = Math.ceil(visibleRows.length / newsEntriesPerPage) || 1;
+        updateNewsPagination();
+    }
+    function changeNewsEntries() {
+        newsEntriesPerPage = parseInt(document.getElementById('newsEntriesSelect').value);
+        newsCurrentPage = 1;
+        updateNewsPagination();
+    }
+</script>

@@ -1,0 +1,57 @@
+
+@{
+    ViewData["Title"] = "Location";
+}
+
+
+<link href="~/css/home-location.css" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<partial name="_NavBar" />
+
+<div class="location-container">
+    <div id="map"></div>
+
+    <div class="location-info">
+        <h1>Balete Grove Real Estate</h1>
+        <p><strong>Address:</strong> Calinan, Davao City, Philippines</p>
+        <p><strong>Landmark:</strong> Near Calinan Public Market</p>
+        <p><strong>Office Hours:</strong> Mon–Fri, 8:00 AM – 5:00 PM</p>
+        <p><strong>Contact:</strong> +63 912 345 6789</p>
+        <p>Balete Grove Real Estate brings nature-inspired living to Davao City, offering peaceful, eco-friendly communities surrounded by lush greenery.</p>
+    </div>
+</div>
+
+<partial name="_Footer" />
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    
+    var lat = 7.1608;
+    var lng = 125.4557;
+
+    
+    var map = L.map('map').setView([lat, lng], 15);
+
+    
+    L.tileLayer('https:
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    
+    var pulsingMarkerIcon = L.divIcon({
+        className: '', 
+        html: '<div class="pulse-marker"></div>',
+        iconSize: [40, 55],
+        iconAnchor: [20, 55] 
+    });
+
+    
+    L.marker([lat, lng], { icon: pulsingMarkerIcon }).addTo(map)
+        .bindPopup("<b>Balete Grove Real Estate</b><br>Calinan, Davao City")
+        .openPopup();
+</script>

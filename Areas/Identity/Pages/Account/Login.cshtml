@@ -1,0 +1,85 @@
+@page
+@model LoginModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+
+@{
+    ViewData["Title"] = "Log in";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="~/css/identity-login.css" asp-append-version="true" />
+
+<div class="page-wrap">
+    <div class="inner-wrap">
+        <section class="left-col">
+            <div class="card">
+                <a class="back" href="@Url.Action("Index", "Home")">
+                    <i class="fa-solid fa-arrow-left"></i> BACK TO HOME
+                </a>
+
+                <h1 class="title">ACCOUNT LOGIN</h1>
+
+                <form class="login-form" method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <div class="pill">
+                        <span class="icon-left"><i class="fa-solid fa-envelope"></i></span>
+                        <input asp-for="Input.Email" placeholder="Email Address" required />
+                    </div>
+
+                    <div class="pill">
+                        <span class="icon-left"><i class="fa-solid fa-lock"></i></span>
+                        <input asp-for="Input.Password" id="passwordInput" placeholder="Password" required />
+                        <button type="button" class="eye" id="togglePassword">
+                            <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+
+                    <div style="margin: 15px 0;">
+                        <div class="cf-turnstile" data-sitekey="@Configuration["Brevo:Turnstile:SiteKey"]"></div>
+                    </div>
+
+                    <button type="submit" class="btn-login">LOGIN</button>
+
+                    @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+                    {
+                        <div style="text-align:center; margin: 2rem 0 1rem; color: var(--text-muted); font-size: 0.8rem;">
+                            OR CONTINUE WITH
+                        </div>
+                        <div style="display: flex; justify-content: center; gap: 1rem;">
+                            @foreach (var provider in Model.ExternalLogins)
+                            {
+                                <button type="submit" asp-page="./ExternalLogin" asp-route-provider="@provider.Name" class="btn-login" style="width: auto; padding: 0.5rem 1rem;">
+                                    @provider.DisplayName
+                                </button>
+                            }
+                        </div>
+                    }
+                </form>
+            </div>
+        </section>
+
+        <aside class="right-col">
+            <img class="logo" src="~/images/Logo.jpg" alt="Company Logo" />
+        </aside>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script>
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const pwd = document.getElementById('passwordInput');
+            const icon = document.getElementById('eyeIcon');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                pwd.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+    </script>
+}

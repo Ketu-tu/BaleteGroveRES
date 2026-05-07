@@ -1,0 +1,255 @@
+@model List<BaleteGroveRES.Models.Admin.Property>
+
+@{
+    ViewData["Title"] = "Property Management";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/admin-properties.css" asp-append-version="true">
+
+<partial name="_AdminSideBar" />
+
+<div class="page-container">
+    <div class="page-inner">
+        <h1>Property Management</h1>
+
+        <div class="table-header">
+            <div class="left-controls">
+                <input type="text" id="listingsSearch" placeholder="Search properties..." onkeyup="searchListings()" />
+                <select id="listingsEntriesSelect" onchange="changeListingsEntries()">
+                    <option value="5" selected>Show 5</option>
+                    <option value="10">Show 10</option>
+                    <option value="20">Show 20</option>
+                </select>
+                <div class="entry-counter" id="listingsCounter">
+                    @(Model?.Count() ?? 0) entries
+                </div>
+            </div>
+            <button class="btn-create" onclick="openModal('addListingModal')">
+                <i class="fa-solid fa-plus"></i> Create New Listing
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table id="listingsTable">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Property Name</th>
+                        <th>Type</th>
+                        <th>Price</th>
+                        <th>Date Created</th>
+                        <th>Total Clicks</th>
+                        <th>Details</th>
+                        <th>Extra Images</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="property-img-container">
+                                    <img src="/images/placeholder.jpg"
+                                         data-src="@item.PropertyImage"
+                                         loading="lazy"
+                                         class="lazy-img"
+                                         width="80"
+                                         height="60" />
+                                </div>
+                            </td>
+                            <td><strong>@item.PropertyName</strong></td>
+                            <td>@item.Type</td>
+                            <td>₱@item.Price.ToString("N0")</td>
+                            <td>@item.DateCreated.ToString("MMM dd, yyyy")</td>
+                            <td>@item.TotalClicks</td>
+                            <td class="details-text" title="@item.Details">
+                                @item.Details
+                            </td>
+                            <td>
+                                <div style="display:flex; gap:5px;">
+                                    @if (!string.IsNullOrEmpty(item.ExtraImage1))
+                                    {
+                                        <img src="@item.ExtraImage1" width="40" height="40" />
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.ExtraImage2))
+                                    {
+                                        <img src="@item.ExtraImage2" width="40" height="40" />
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.ExtraImage3))
+                                    {
+                                        <img src="@item.ExtraImage3" width="40" height="40" />
+                                    }
+                                </div>
+                            </td>
+                            <td class="action-buttons">
+
+                                <button class="btn-icon btn-edit-icon"
+                                        onclick="openEditModal(
+        @item.Id,
+        '@Html.Raw(item.PropertyName.Replace("'", "\\'"))',
+        '@item.Type',
+        @item.Price,
+        '@Html.Raw(item.Details.Replace("'", "\\'"))'
+    )">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+
+                                <form method="post" asp-action="DeleteProperty" style="display:inline;">
+                                    <button type="button"
+                                            class="btn-icon btn-delete-icon"
+                                            onclick="openDeleteModal(@item.Id)">
+                                        <i class="fa-solid fa-box-archive" style="color: #e67e22;"></i>
+                                    </button>
+                                </form>
+
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-controls">
+            <button onclick="changePageTo(1)" @(ViewBag.CurrentPage <= 1 || ViewBag.TotalPages <= 0 ? "disabled" : "")>First</button>
+            <button onclick="changePage(-1)" @(ViewBag.CurrentPage <= 1 || ViewBag.TotalPages <= 0 ? "disabled" : "")>Prev</button>
+            <span id="pageInfo">Page @ViewBag.CurrentPage of @(ViewBag.TotalPages > 0 ? ViewBag.TotalPages : 1)</span>
+            <button onclick="changePage(1)" @(ViewBag.CurrentPage >= ViewBag.TotalPages || ViewBag.TotalPages <= 0 ? "disabled" : "")>Next</button>
+            <button onclick="changePageTo(@ViewBag.TotalPages)" @(ViewBag.CurrentPage >= ViewBag.TotalPages || ViewBag.TotalPages <= 0 ? "disabled" : "")>Last</button>
+        </div>
+    </div>
+</div>
+
+<div class="page-container" style="margin-top: 20px;">
+    <div class="page-inner">
+        <h2>Archived Properties</h2>
+        
+        <div class="table-header">
+            <div class="left-controls">
+                <input type="text" id="archivedSearch" placeholder="Search archived properties..." onkeyup="searchArchived()" />
+                <div class="entry-counter" id="archivedCounter">
+                    @(ViewBag.ArchivedProperties?.Count ?? 0) entries
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table id="archivedTable">
+                <thead>
+                    <tr>
+                        <th>Property Name</th>
+                        <th>Type</th>
+                        <th>Price</th>
+                        <th>Date Archived</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ViewBag.ArchivedProperties != null)
+                    {
+                        foreach (var item in ViewBag.ArchivedProperties)
+                        {
+                            <tr class="archived-row">
+                                <td><strong>@item.PropertyName</strong></td>
+                                <td>@item.Type</td>
+                                <td>₱@item.Price.ToString("N0")</td>
+                                <td>@item.DateCreated.ToString("MMM dd, yyyy")</td>
+                               <td style="text-align:center; vertical-align:middle; padding:0;">
+    <button type="button" class="btn-icon" style="background:none; border:none; color:#1F5633; font-size:18px; cursor:pointer; display:block; margin:0 auto;" title="Restore Property" onclick="openRestoreModal(@item.Id)">
+        <i class="fa-solid fa-rotate-left"></i>
+    </button>
+</td>
+                            </tr>
+                        }
+                        if (ViewBag.ArchivedProperties.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" style="text-align:center; padding: 20px;">No archived properties found.</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<partial name="Modals/_PropertyModals" />
+
+<script>
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function searchListings() { console.log("Searching..."); }
+    function changeListingsEntries() { console.log("Changing entries..."); }
+    function listingsPrevPage() { console.log("Prev Page"); }
+    function listingsNextPage() { console.log("Next Page"); }
+
+    function changePage(step) {
+        let page = @ViewBag.CurrentPage + step;
+        changePageTo(page);
+    }
+
+    function changePageTo(page) {
+        let search = document.getElementById("listingsSearch").value;
+        let size = document.getElementById("listingsEntriesSelect").value;
+        window.location.href = `?page=${page}&search=${search}&pageSize=${size}`;
+    }
+
+    function searchListings() {
+        let search = document.getElementById("listingsSearch").value;
+        let size = document.getElementById("listingsEntriesSelect").value;
+
+        window.location.href = `?search=${search}&pageSize=${size}`;
+    }
+
+    function changeListingsEntries() {
+        let size = document.getElementById("listingsEntriesSelect").value;
+
+        window.location.href = `?pageSize=${size}`;
+    }
+
+    function searchArchived() {
+        const input = document.getElementById("archivedSearch").value.toUpperCase();
+        const rows = document.querySelectorAll(".archived-row");
+        let count = 0;
+        rows.forEach(row => {
+            const text = row.innerText.toUpperCase();
+            if (text.includes(input)) {
+                row.style.display = "";
+                count++;
+            } else {
+                row.style.display = "none";
+            }
+        });
+        document.getElementById("archivedCounter").innerText = count + " entries shown";
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const images = document.querySelectorAll("img[data-src]");
+
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+
+                          
+                    img.src = img.dataset.src;
+
+                    img.onload = () => {
+                        img.classList.add("loaded");
+                    };
+
+                    observer.unobserve(img);
+                }
+            });
+        }, {
+            rootMargin: "150px"
+        });
+
+        images.forEach(img => imageObserver.observe(img));
+    });
+</script>

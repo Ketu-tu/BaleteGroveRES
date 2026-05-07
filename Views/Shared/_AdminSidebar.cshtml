@@ -1,0 +1,178 @@
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<BaleteGroveRES.Models.ApplicationUser> UserManager
+
+@{
+    var user = UserManager.GetUserAsync(User).Result;
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="~/css/admin-sidebar.css">
+
+<style>
+    
+    .side-nav i,
+    .mobile-nav-toggle i {
+        font-family: "Font Awesome 6 Free" !important;
+        font-weight: 900 !important;
+        display: inline-block;
+    }
+</style>
+
+<button class="mobile-nav-toggle" id="mobileToggle">
+    <i class="fas fa-bars"></i>
+</button>
+
+<nav class="side-nav" id="sidebar">
+    <div class="logo">
+        <img src="~/images/Logo.jpg" alt="Balete Grove Logo" />
+    </div>
+
+    <ul class="nav-list">
+        <li class="nav-item">
+            <a asp-controller="Admin"
+               asp-action="Dashboard"
+               class="nav-link @(currentAction == "Dashboard" ? "active" : "")">
+                <i class="fas fa-th-large"></i><span>Dashboard</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="@Url.Action("PropertyManagement", "Admin")" class="nav-link @(currentAction == "PropertyManagement" ? "active" : "")">
+                <i class="fas fa-home"></i><span>Property Management</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <button class="submenu-btn">
+                <i class="fas fa-users"></i><span>People & Leads</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </button>
+            <ul class="submenu">
+                <li>
+                    <a href="@Url.Action("UserManagement", "Admin")" class="nav-link @(currentAction == "UserManagement" ? "active" : "")">
+                        <i class="fas fa-user-gear"></i>  User Management
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("AgentPerformance", "Admin")" class="nav-link @(currentAction == "AgentPerformance" ? "active" : "")">
+                        <i class="fas fa-chart-line"></i> Agent Performance
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("History", "Admin")" class="nav-link @(currentAction == "History" ? "active" : "")">
+                    <i class="fas fa-history"></i> History
+                    </a>
+                    </li>
+                <li>
+                    <a href="@Url.Action("Inquiries", "Admin")" class="nav-link @(currentAction == "Inquiries" ? "active" : "")">
+                    <i class="fas fa-comment-dots"></i> Inquiries
+                    </a>
+                    </li>
+            </ul>
+        </li>
+
+        <li class="nav-item">
+            <a href="@Url.Action("TransactionLedger", "Admin")" class="nav-link @(currentAction == "TransactionLedger" ? "active" : "")">
+                <i class="fas fa-file-invoice-dollar"></i><span>Transaction Ledgers</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="@Url.Action("Expenses", "Admin")" class="nav-link @(currentAction == "Expenses" ? "active" : "")">
+                <i class="fas fa-calculator"></i><span>Finance & Expenses</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <button class="submenu-btn">
+                <i class="fas fa-globe"></i><span>Website Management</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </button>
+            <ul class="submenu">
+                <li>
+                    <a href="@Url.Action("CommunityNews", "Admin")" class="nav-link @(currentAction == "CommunityNews" ? "active" : "")">
+                        <i class="fas fa-newspaper"></i> Community News
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("ImageGallery", "Admin")" class="nav-link @(currentAction == "ImageGallery" ? "active" : "")">
+                        <i class="fas fa-images"></i>  Image Gallery
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("SiteSettings", "Admin")" class="nav-link @(currentAction == "SiteSettings" ? "active" : "")">
+                        <i class="fas fa-sliders-h"></i>  Site Settings
+                    </a>
+            </ul>
+        </li>
+
+        <hr class="nav-divider" />
+
+        <li class="nav-item">
+            <button class="submenu-btn">
+                <i class="fas fa-user-circle"></i><span>Account</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </button>
+            <ul class="submenu">
+                <li><a href="@Url.Action("AdminProfile", "Admin")" class="nav-link @(currentAction == "AdminProfile" ? "active" : "")">
+                    <i class="fas fa-id-card"></i> My Profile
+                    </a>
+                </li>
+                <li>
+                    <a href="javascript:void(0);" class="nav-link" onclick="document.getElementById('logoutForm').submit();">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" method="post" style="display:none;"></form>
+</nav>
+
+<script>
+    document.querySelectorAll('.submenu-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const submenu = button.nextElementSibling;
+            const arrow = button.querySelector('.arrow');
+            submenu.classList.toggle('show');
+            arrow.classList.toggle('rotate');
+        });
+    });
+
+    const mobileToggle = document.getElementById('mobileToggle');
+    const sidebar = document.getElementById('sidebar');
+
+    function applyLayout() {
+        const container = document.querySelector('.dashboard-container');
+        if (!container) return;
+
+        if (window.innerWidth > 992) {
+            
+            sidebar.style.left = '0';
+            container.style.marginLeft = '250px';
+            container.style.width = 'calc(100% - 250px)';
+            mobileToggle.style.display = 'none';
+        } else {
+            
+            sidebar.style.left = '-250px';
+            container.style.marginLeft = '0';
+            container.style.width = '100%';
+            mobileToggle.style.display = 'block';
+        }
+    }
+
+    
+    applyLayout();
+
+    
+    mobileToggle.addEventListener('click', () => {
+        const isOpen = sidebar.style.left === '0px';
+        sidebar.style.left = isOpen ? '-250px' : '0';
+    });
+
+    
+    window.addEventListener('resize', applyLayout);
+</script>

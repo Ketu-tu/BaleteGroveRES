@@ -1,0 +1,175 @@
+@model IEnumerable<BaleteGroveRES.Models.Admin.Client>
+
+@{
+    ViewData["Title"] = "My Clients";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/agent-inquiries.css">
+
+
+
+<partial name="~/Views/Shared/_AgentSidebar.cshtml" />
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+        <h1>My Clients</h1>
+        <br>
+        <h4 style="margin-top: 10px;">Active Client Roster</h4>
+        <br>
+        <div class="table-header">
+            <div class="left-controls">
+                <input type="text" placeholder="Search clients..." class="search-input" id="clientSearch" onkeyup="filterClients()" />
+                <select class="entries-select" id="clientEntries" onchange="changeClientEntries()">
+                    <option value="5" selected>Show 5</option>
+                    <option value="10">Show 10</option>
+                </select>
+                <div class="entry-counter" id="clientCounter">0 entries</div>
+            </div>
+        </div>
+
+        <div class="table-wrapper" style="margin-bottom:0;">
+            <table id="clientTable">
+                <thead>
+                    <tr>
+                        <th>Client Name</th>
+                        <th>Lot Name</th>
+                        <th>Contact</th>
+                        <th>Status</th>
+                        <th style="min-width:220px;">Next Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var client in Model)
+                        {
+                            <tr>
+                                <td style="font-weight: 600;">@client.Inquiry?.FullName</td>
+                                <td>@client.Inquiry?.Property?.PropertyName</td>
+                                <td>
+                                    <div style="font-size:12px;">@client.Inquiry?.Email</div>
+                                    <div style="font-size:12px;">@client.Inquiry?.PhoneNumber</div>
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill pill" style="border:none; background:#eee; padding:5px 12px; font-size:12px;">
+                                        @if (client.DateVisitationFinished != null)
+                                        {
+                                            @: Visitation Complete
+                                        }
+                                        else if (client.DateVisitationScheduled != null)
+                                        {
+
+                                            @: Visitation Scheduled
+                                        }
+                                        else
+                                        {
+
+                                            @: Processing
+                                        }
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; justify-content:center;">
+                                        @if (client.DateVisitationScheduled == null)
+                                        {
+                                            <form asp-action="ScheduleVisitation" asp-controller="Agent" method="post">
+                                                <input type="hidden" name="clientId" value="@client.Id" />
+                                                <button type="submit" class="btn-action" style="white-space:nowrap;">Schedule Visit</button>
+                                            </form>
+                                        }
+                                        else if (client.DateVisitationFinished == null)
+                                        {
+                                            <form asp-action="FinishVisitation" asp-controller="Agent" method="post">
+                                                <input type="hidden" name="clientId" value="@client.Id" />
+                                                <button type="submit" class="btn-action" style="white-space:nowrap;">Finish Visit</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="Payment" asp-controller="Agent" asp-route-clientId="@client.Id" class="btn-action" style="text-decoration:none; white-space:nowrap;">Proceed to Payment</a>
+                                        }
+
+                                        <form asp-action="CancelClient" asp-controller="Agent" method="post" onsubmit="return confirm('Are you sure you want to cancel this client? The property will be made available again.');">
+                                            <input type="hidden" name="clientId" value="@client.Id" />
+                                            <button type="submit" class="btn-action" style="background:#b83232; white-space:nowrap;">Cancel</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">You do not have any active clients. Accept an inquiry first!</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-controls" id="clientPagination">
+            <button onclick="clientFirstPage()" id="clientFirstBtn">First</button>
+            <button onclick="clientPrevPage()" id="clientPrevBtn">Prev</button>
+            <span class="page-info" id="clientPageInfo">Page 1 of 1</span>
+            <button onclick="clientNextPage()" id="clientNextBtn">Next</button>
+            <button onclick="clientLastPage()" id="clientLastBtn">Last</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let clientEntriesPerPage = 5;
+    let clientCurrentPage = 1;
+    let clientAllRows = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const clientTbody = document.querySelector('#clientTable tbody');
+        clientAllRows = Array.from(clientTbody.getElementsByTagName('tr'));
+
+        if(clientAllRows.length === 1 && clientAllRows[0].innerText.includes("You do not have any active clients")) {
+            clientAllRows = [];
+            document.getElementById('clientPagination').style.display = 'none';
+        } else {
+            updateClientPagination();
+        }
+    });
+
+    function updateClientPagination() {
+        if(clientAllRows.length === 0) return;
+        const searchValue = document.getElementById('clientSearch').value.toUpperCase();
+        const visibleRows = clientAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        const totalPages = Math.ceil(visibleRows.length / clientEntriesPerPage);
+
+        clientAllRows.forEach(row => row.style.display = 'none');
+        visibleRows.slice((clientCurrentPage - 1) * clientEntriesPerPage, clientCurrentPage * clientEntriesPerPage)
+                   .forEach(row => row.style.display = '');
+
+        document.getElementById('clientCounter').textContent = visibleRows.length + ' entries';
+        document.getElementById('clientPageInfo').textContent = `Page ${clientCurrentPage} of ${totalPages || 1}`;
+
+        document.getElementById('clientFirstBtn').disabled = clientCurrentPage === 1;
+        document.getElementById('clientPrevBtn').disabled = clientCurrentPage === 1;
+        document.getElementById('clientNextBtn').disabled = clientCurrentPage >= totalPages || totalPages === 0;
+        document.getElementById('clientLastBtn').disabled = clientCurrentPage >= totalPages || totalPages === 0;
+    }
+
+    function filterClients() { clientCurrentPage = 1; updateClientPagination(); }
+    function clientNextPage() { clientCurrentPage++; updateClientPagination(); }
+    function clientPrevPage() { clientCurrentPage--; updateClientPagination(); }
+    function clientFirstPage() { clientCurrentPage = 1; updateClientPagination(); }
+    function clientLastPage() {
+        const searchValue = document.getElementById('clientSearch').value.toUpperCase();
+        const visibleRows = clientAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        clientCurrentPage = Math.ceil(visibleRows.length / clientEntriesPerPage) || 1;
+        updateClientPagination();
+    }
+    function changeClientEntries() {
+        clientEntriesPerPage = parseInt(document.getElementById('clientEntries').value);
+        clientCurrentPage = 1;
+        updateClientPagination();
+    }
+</script>

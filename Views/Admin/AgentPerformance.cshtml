@@ -1,0 +1,121 @@
+@{
+    ViewData["Title"] = "Agent Performance";
+    var agents = ViewBag.Agents as IEnumerable<BaleteGroveRES.Models.ApplicationUser>;
+    var profiles = ViewBag.Profiles as Dictionary<string, BaleteGroveRES.Models.UserProfile>;
+    var salesData = ViewBag.SalesData as Dictionary<string, decimal>;
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/admin-communitynews.css" asp-append-version="true">
+
+<partial name="_AdminSideBar" />
+
+<div class="dashboard-container">
+    <style>
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: 0.3px;
+        }
+        .badge-available {
+            background: #d6e8d8;
+            color: #1e4d2b;
+            border: 1px solid #a8cca8;
+        }
+        .badge-pending {
+            background: #fde8d0;
+            color: #7a3e00;
+            border: 1px solid #f5bc87;
+        }
+    </style>
+    <div class="dashboard-inner">
+        <h1>Agent Performance</h1>
+
+        <div class="table-wrapper" style="margin-top: 20px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:25%; text-align:left; padding-left:20px;">Agent Name</th>
+                        <th style="width:15%;">Status</th>
+                        <th style="width:20%;">Current Month Sales</th>
+                        <th style="width:20%;">Monthly Quota</th>
+                        <th style="width:20%;">Target Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (agents != null && agents.Any())
+                    {
+                        foreach (var agent in agents)
+                        {
+                            var profile = profiles != null && profiles.ContainsKey(agent.Id) ? profiles[agent.Id] : null;
+                            decimal quota = profile?.MonthlySalesQuota ?? 10000000m;
+                            decimal sales = salesData != null && salesData.ContainsKey(agent.Id) ? salesData[agent.Id] : 0m;
+                            
+                            string fullName = profile != null ? $"{profile.FirstName} {profile.LastName}".Trim() : "N/A";
+                            if (string.IsNullOrEmpty(fullName)) fullName = "N/A";
+
+                            bool isOnLeave = profile?.IsOnLeave ?? false;
+                            
+                            decimal percentage = quota > 0 ? (sales / quota) * 100 : 0;
+                            if (percentage > 100) percentage = 100;
+                            
+                            string progressColor = percentage >= 100 ? "#28a745" : (percentage > 50 ? "#ffc107" : "#dc3545");
+
+                            <tr>
+                                <td style="text-align:left; padding-left:20px;">
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        @if (profile != null && !string.IsNullOrEmpty(profile.ProfilePhotoPath))
+                                        {
+                                            <img src="@profile.ProfilePhotoPath" style="width:32px; height:32px; border-radius:50%; object-fit:cover; border:1px solid #ccc;"/>
+                                        }
+                                        else
+                                        {
+                                            <div style="width:32px; height:32px; border-radius:50%; background:#e8ecd7; color:#1F5633; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">
+                                                @(agent.Email.Substring(0,2).ToUpper())
+                                            </div>
+                                        }
+                                        <div>
+                                            <strong>@fullName</strong><br/>
+                                            <span style="font-size:11px; color:#666;">@agent.Email</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if(isOnLeave)
+                                    {
+                                        <span class="badge badge-pending">On Leave</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-available">Active</span>
+                                    }
+                                </td>
+                                <td><strong style="color:#1F5633;">₱@sales.ToString("N0")</strong></td>
+                                <td><span style="color:#555;">₱@quota.ToString("N0")</span></td>
+                                <td>
+                                    <div style="width:100%; display:flex; flex-direction:column; align-items:center; gap:5px;">
+                                        <span style="font-size:12px; font-weight:700; color:@progressColor;">@percentage.ToString("0.0")%</span>
+                                        <div style="width:80%; height:8px; background:#e0e0e0; border-radius:4px; overflow:hidden;">
+                                            <div style="width:@percentage%; height:100%; background:@progressColor; transition:width 0.5s;"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding:20px;">No agents found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

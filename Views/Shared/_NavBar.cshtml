@@ -1,0 +1,70 @@
+
+<link href="~/css/navbar.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<div class="top-bar">
+    <a href="@Url.Action("Location", "Home")">Location</a>
+    <a href="@Url.Action("News", "Home")">Community News</a>
+    <a href="@Url.Action("FAQs", "Home")">FAQs</a>
+    <select class="language-select">
+        <option>English</option>
+    </select>
+</div>
+
+<header class="header">
+    
+    <div class="logo">
+        <img src="~/images/NavLogo.png" alt="Balete Grove Logo">
+    </div>
+
+    <button class="mobile-toggle" id="mobileToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <nav class="nav-menu" id="navMenu">
+        <a href="@Url.Action("Index", "Home")"
+           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Home"
+                               && (ViewContext.RouteData.Values["action"]?.ToString() == "Index" || ViewContext.RouteData.Values["action"]?.ToString() == "Home") ? "active" : "")">
+            Home
+        </a>
+
+        <a href="@Url.Action("AboutUs", "Home")"
+           class="@(ViewContext.RouteData.Values["action"]?.ToString() == "AboutUs" ? "active" : "")">
+            About Us
+        </a>
+
+        <a href="@Url.Action("PropertyListings", "Home")"
+           class="properties @(ViewContext.RouteData.Values["action"]?.ToString() == "PropertyListings" ? "active" : "")">
+            Properties
+        </a>
+
+        <a href="@Url.Action("Gallery", "Home")"
+           class="properties @(ViewContext.RouteData.Values["action"]?.ToString() == "Gallery" ? "active" : "")">
+            Gallery
+        </a>
+
+        <a href="~/Identity/Account/Login"
+           class="@(ViewContext.RouteData.Values["area"]?.ToString() == "Identity" &&
+                               ViewContext.RouteData.Values["page"]?.ToString()?.Contains("Login") == true ? "active" : "")">
+            Login
+        </a>
+    </nav>
+</header>
+
+<script>
+    document.getElementById('mobileToggle').addEventListener('click', function() {
+        const nav = document.getElementById('navMenu');
+        const icon = this.querySelector('i');
+
+        nav.classList.toggle('show');
+
+        if (nav.classList.contains('show')) {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+        } else {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+        }
+    });
+</script>

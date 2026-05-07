@@ -1,0 +1,255 @@
+@model IEnumerable<BaleteGroveRES.Models.Admin.Inquiry>
+@{
+    ViewData["Title"] = "All Inquiries";
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/admin-usermanagement.css" asp-append-version="true">
+
+<partial name="_AdminSideBar" />
+
+<style>
+    .confirm-modal {
+        display: none;
+        position: fixed;
+        z-index: 10000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(45, 82, 52, 0.5);
+        backdrop-filter: blur(4px);
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+    .confirm-modal-content {
+        background: #f4f5f0;
+        padding: 40px 30px;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        font-family: 'Montserrat', sans-serif;
+    }
+    .confirm-modal-title {
+        color: #234e33;
+        font-size: 24px;
+        font-weight: 700;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    .confirm-modal-message {
+        color: #234e33;
+        font-size: 15px;
+        line-height: 1.5;
+        margin-bottom: 25px;
+    }
+    .confirm-modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+    .btn-confirm-cancel {
+        background: #999;
+        color: white;
+        padding: 10px 25px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Montserrat', sans-serif;
+    }
+    .btn-confirm-action {
+        color: white;
+        padding: 10px 25px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Montserrat', sans-serif;
+    }
+</style>
+
+<div id="confirmActionModal" class="confirm-modal">
+    <div class="confirm-modal-content">
+        <h2 id="confirmModalTitle" class="confirm-modal-title">Confirm Action</h2>
+        <p id="confirmModalMessage" class="confirm-modal-message">Are you sure?</p>
+        <div class="confirm-modal-actions">
+            <button type="button" class="btn-confirm-cancel" onclick="closeConfirmModal()">Cancel</button>
+            <button type="button" id="confirmModalSubmitBtn" class="btn-confirm-action">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+        <h1>Inquiries</h1>
+
+        <div class="table-header">
+            <div class="left-controls">
+                <input type="text" placeholder="Search inquiries..." id="inquirySearch" onkeyup="filterInquiries()" />
+                <div class="entry-counter" id="inquiryCounter">@Model.Count() entries shown</div>
+            </div>
+            <div class="right-controls">
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="inquiryTable">
+                <thead>
+                    <tr>
+                        <th>Date Submitted</th>
+                        <th>Prospect Details</th>
+                        <th>Property Target</th>
+                        <th>Agent Handler</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var inq in Model)
+                    {
+                        <tr class="inquiry-row">
+                            <td>
+                                <strong>@inq.DateSubmitted.ToString("MMM dd, yyyy")</strong><br />
+                                <span style="font-size: 0.85em; color: #555;">@inq.DateSubmitted.ToString("hh:mm tt")</span>
+                            </td>
+                            <td>
+                                <strong>@inq.FullName</strong><br />
+                                <span style="font-size: 0.85em; color: #555;">@inq.Email</span>
+                            </td>
+                            <td>
+                                <strong>@inq.Property.PropertyName</strong>
+                            </td>
+                            <td>
+                                @if (inq.Agent != null)
+                                {
+                                    <span class="role-badge" style="background:#e8ecd7; color:#1F5633;">@inq.Agent.UserName</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #999; font-style: italic;">Unclaimed</span>
+                                }
+                            </td>
+                            <td>
+                                @if (inq.Status == "Admin Review")
+                                {
+                                    <span class="status-badge" style="background:#E8921A; color:white;">Needs Review</span>
+                                }
+                                else if (inq.Status == "Pending")
+                                {
+                                    <span class="status-badge" style="background:#d4af37; color:white;">Pending</span>
+                                }
+                                else if (inq.Status == "Accepted")
+                                {
+                                    <span class="status-badge" style="background:#2C3729; color:white;">Accepted</span>
+                                }
+                                else if (inq.Status == "Completed")
+                                {
+                                    <span class="status-badge" style="background:#1F5633; color:white;">Completed</span>
+                                }
+                                else 
+                                {
+                                    <span class="status-badge" style="background:#888; color:white;">@inq.Status</span>
+                                }
+                            </td>
+                            <td style="text-align:center; vertical-align:middle;">
+                                @if (inq.Status == "Admin Review")
+                                {
+                                    <div style="display:flex; gap:5px; justify-content:center; align-items:center;">
+                                        <form method="post" asp-action="ConfirmInquiry" asp-route-id="@inq.Id" onsubmit="event.preventDefault(); openConfirmModal(this, 'Release Inquiry', 'Release this inquiry to the agent pool?', '#1F5633', 'Release');">
+                                            <button type="submit" class="btn-action" style="background:#1F5633; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" title="Confirm and release to agents">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <form method="post" asp-action="CancelInquiry" asp-route-id="@inq.Id" onsubmit="event.preventDefault(); openConfirmModal(this, 'Cancel Inquiry', 'Cancel this inquiry and free the property?', '#cc0000', 'Cancel Inquiry');">
+                                            <button type="submit" class="btn-action" style="background:#cc0000; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" title="Cancel inquiry">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                                else if (inq.Status == "Accepted" || inq.Status == "Processing" || inq.Status == "Payment Pending")
+                                {
+                                    <div style="display:flex; justify-content:center; align-items:center;">
+                                        <form method="post" asp-action="RevokeInquiry" asp-route-id="@inq.Id" onsubmit="event.preventDefault(); openConfirmModal(this, 'Revoke Inquiry', 'Forcefully revoke this client from the agent and return to pool?', '#e67e22', 'Revoke');">
+                                            <button type="submit" class="btn-action" style="background:#e67e22; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" title="Revoke from Agent">
+                                                <i class="fas fa-user-minus"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding: 20px;">No inquiries found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-controls">
+            <a href="?page=1" id="firstBtn" class="btn-page @(currentPage <= 1 ? "disabled" : "")">First</a>
+            <a href="?page=@(currentPage - 1)" id="prevBtn" class="btn-page @(currentPage <= 1 ? "disabled" : "")">Prev</a>
+            
+            <span id="userPageInfo">Page @currentPage of @totalPages</span>
+            
+            <a href="?page=@(currentPage + 1)" id="nextBtn" class="btn-page @(currentPage >= totalPages ? "disabled" : "")">Next</a>
+            <a href="?page=@totalPages" id="lastBtn" class="btn-page @(currentPage >= totalPages ? "disabled" : "")">Last</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function filterInquiries() {
+        const input = document.getElementById("inquirySearch").value.toUpperCase();
+        const rows = document.querySelectorAll(".inquiry-row");
+
+        let count = 0;
+        rows.forEach(row => {
+            const text = row.innerText.toUpperCase();
+            if (text.includes(input)) {
+                row.style.display = "";
+                count++;
+            } else {
+                row.style.display = "none";
+            }
+        });
+
+        document.getElementById("inquiryCounter").innerText = count + " entries shown";
+    }
+
+    let currentFormToSubmit = null;
+
+    function openConfirmModal(formElement, title, message, actionColor, actionText) {
+        currentFormToSubmit = formElement;
+        document.getElementById('confirmModalTitle').textContent = title;
+        document.getElementById('confirmModalMessage').textContent = message;
+        
+        const submitBtn = document.getElementById('confirmModalSubmitBtn');
+        submitBtn.textContent = actionText;
+        submitBtn.style.background = actionColor;
+        
+        document.getElementById('confirmActionModal').style.display = 'flex';
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmActionModal').style.display = 'none';
+        currentFormToSubmit = null;
+    }
+
+    document.getElementById('confirmModalSubmitBtn').addEventListener('click', function() {
+        if (currentFormToSubmit) {
+            currentFormToSubmit.submit();
+        }
+    });
+</script>

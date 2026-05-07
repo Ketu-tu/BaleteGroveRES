@@ -1,0 +1,164 @@
+@model IEnumerable<BaleteGroveRES.Models.Admin.Client>
+
+@{
+    ViewData["Title"] = "Transaction History";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/agent-inquiries.css">
+
+<style>
+
+#historyTable {
+    min-width: 900px;
+}
+table th, table td {
+    font-size: 13px !important;
+}
+table th:nth-child(1), table td:nth-child(1) { width: 15%; text-align: left; padding-left:20px; }
+table th:nth-child(2), table td:nth-child(2) { width: 15%; }
+table th:nth-child(3), table td:nth-child(3) { width: 17%; }
+table th:nth-child(4), table td:nth-child(4) { width: 17%; }
+table th:nth-child(5), table td:nth-child(5) { width: 17%; }
+table th:nth-child(6), table td:nth-child(6) { width: 19%; }
+
+.date-val { font-family: monospace; font-size: 12px; color: #555; }
+.null-date { color: #aaa; font-style: italic; font-size: 12px; }
+.paid-date { color: #366642; font-weight: 700; font-family: monospace; font-size: 13px; }
+</style>
+
+<partial name="~/Views/Shared/_AgentSidebar.cshtml" />
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+        <h1>Transaction History</h1>
+        
+        <div class="table-header">
+            <div class="left-controls">
+                <input type="text" placeholder="Search history..." class="search-input" id="historySearch" onkeyup="filterHistory()" />
+                <select class="entries-select" id="historyEntries" onchange="changeHistoryEntries()">
+                    <option value="5">Show 5</option>
+                    <option value="10" selected>Show 10</option>
+                    <option value="20">Show 20</option>
+                </select>
+                <div class="entry-counter" id="historyCounter">0 entries</div>
+            </div>
+        </div>
+
+        <div class="table-wrapper" style="margin-bottom:0;">
+            <table id="historyTable">
+                <thead>
+                    <tr>
+                        <th style="padding-left:20px; text-align:left;">Client / Lot</th>
+                        <th>Status</th>
+                        <th>Accepted On</th>
+                        <th>Scheduled Visit</th>
+                        <th>Finished Visit</th>
+                        <th>Payment Finalized</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if(Model != null && Model.Any())
+                    {
+                        foreach(var item in Model)
+                        {
+                            <tr>
+                                <td style="text-align: left; padding-left:20px;">
+                                    <div style="font-weight: 700; color:#2d5234;">@item.Inquiry?.FullName</div>
+                                    <div style="font-size:12px; color:#666;">@item.Inquiry?.Property?.PropertyName</div>
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill pill" style="border:none; padding:4px 10px; font-size:12px; background: @(item.Status == "Paid" ? "#d4edda" : "#ffeeba"); color: @(item.Status == "Paid" ? "#155724" : "#856404");">
+                                        @item.Status
+                                    </span>
+                                </td>
+                                <td><span class="date-val">@item.DateAccepted.ToString("MMM dd, yyyy HH:mm")</span></td>
+                                <td>
+                                    @if(item.DateVisitationScheduled != null) { <span class="date-val">@item.DateVisitationScheduled.Value.ToString("MMM dd, yyyy HH:mm")</span> }
+                                    else { <span class="null-date">-- Pending --</span> }
+                                </td>
+                                <td>
+                                    @if(item.DateVisitationFinished != null) { <span class="date-val">@item.DateVisitationFinished.Value.ToString("MMM dd, yyyy HH:mm")</span> }
+                                    else { <span class="null-date">-- Pending --</span> }
+                                </td>
+                                <td>
+                                    @if(item.DatePaid != null) { <span class="paid-date">@item.DatePaid.Value.ToString("MMM dd, yyyy HH:mm")</span> }
+                                    else { <span class="null-date">-- Awaiting Payment --</span> }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">No interactions recorded in history.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination-controls" id="historyPagination">
+            <button onclick="historyFirstPage()" id="historyFirstBtn">First</button>
+            <button onclick="historyPrevPage()" id="historyPrevBtn">Prev</button>
+            <span class="page-info" id="historyPageInfo">Page 1 of 1</span>
+            <button onclick="historyNextPage()" id="historyNextBtn">Next</button>
+            <button onclick="historyLastPage()" id="historyLastBtn">Last</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let historyEntriesPerPage = 10;
+    let historyCurrentPage = 1;
+    let historyAllRows = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const historyTbody = document.querySelector('#historyTable tbody');
+        historyAllRows = Array.from(historyTbody.getElementsByTagName('tr'));
+        
+        if(historyAllRows.length === 1 && historyAllRows[0].innerText.includes("No interactions recorded")) {
+            historyAllRows = [];
+            document.getElementById('historyPagination').style.display = 'none';
+        } else {
+            updateHistoryPagination();
+        }
+    });
+
+    function updateHistoryPagination() {
+        if(historyAllRows.length === 0) return;
+        const searchValue = document.getElementById('historySearch').value.toUpperCase();
+        const visibleRows = historyAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        const totalPages = Math.ceil(visibleRows.length / historyEntriesPerPage);
+
+        historyAllRows.forEach(row => row.style.display = 'none');
+        visibleRows.slice((historyCurrentPage - 1) * historyEntriesPerPage, historyCurrentPage * historyEntriesPerPage)
+                   .forEach(row => row.style.display = '');
+
+        document.getElementById('historyCounter').textContent = visibleRows.length + ' entries';
+        document.getElementById('historyPageInfo').textContent = `Page ${historyCurrentPage} of ${totalPages || 1}`;
+
+        document.getElementById('historyFirstBtn').disabled = historyCurrentPage === 1;
+        document.getElementById('historyPrevBtn').disabled = historyCurrentPage === 1;
+        document.getElementById('historyNextBtn').disabled = historyCurrentPage >= totalPages || totalPages === 0;
+        document.getElementById('historyLastBtn').disabled = historyCurrentPage >= totalPages || totalPages === 0;
+    }
+
+    function filterHistory() { historyCurrentPage = 1; updateHistoryPagination(); }
+    function historyNextPage() { historyCurrentPage++; updateHistoryPagination(); }
+    function historyPrevPage() { historyCurrentPage--; updateHistoryPagination(); }
+    function historyFirstPage() { historyCurrentPage = 1; updateHistoryPagination(); }
+    function historyLastPage() {
+        const searchValue = document.getElementById('historySearch').value.toUpperCase();
+        const visibleRows = historyAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        historyCurrentPage = Math.ceil(visibleRows.length / historyEntriesPerPage) || 1;
+        updateHistoryPagination();
+    }
+    function changeHistoryEntries() {
+        historyEntriesPerPage = parseInt(document.getElementById('historyEntries').value);
+        historyCurrentPage = 1;
+        updateHistoryPagination();
+    }
+</script>

@@ -1,0 +1,160 @@
+@model IEnumerable<BaleteGroveRES.Models.Admin.TransactionLedger>
+
+@{
+    ViewData["Title"] = "Transaction Ledgers";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/admin-transactionledgers.css" asp-append-version="true">
+
+<partial name="_AdminSidebar" />
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+        <h1>Transaction Ledgers</h1>
+            
+            <div class="table-header">
+                <div class="left-controls">
+                    <input type="text" placeholder="Search transactions..." class="search-input" id="ledgerSearch" onkeyup="filterLedger()" />
+                    <select class="entries-select" id="ledgerEntries" onchange="changeLedgerEntries()">
+                        <option value="5" selected>Show 5</option>
+                        <option value="10">Show 10</option>
+                        <option value="20">Show 20</option>
+                    </select>
+                    <div class="entry-counter" id="ledgerCounter">0 entries</div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="ledgerTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Property ID</th>
+                            <th>Property Name</th>
+                            <th>Agent</th>
+                            <th>Buyer Name</th>
+                            <th>Sale Amount</th>
+                            <th>Payout Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if(Model != null && Model.Any())
+                        {
+                            foreach(var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.TransactionDate.ToString("g")</td>
+                                    <td>#@item.PropertyId</td>
+                                    <td>@item.Property?.PropertyName</td>
+                                    <td>@item.Agent?.UserName</td>
+                                    <td>@item.BuyerName</td>
+                                    <td style="color:#366642; font-weight: 700;">
+                                        ₱@item.SaleAmount.ToString("N2")
+                                    </td>
+                                    <td>
+                                        @if(item.IsCommissionPaid)
+                                        {
+                                            <span style="background-color:#d4edda; color:#155724; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:600;">Paid</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="background-color:#fff3cd; color:#856404; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:600;">Pending</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div style="display:flex; gap:5px; justify-content: center;">
+                                            <a href="@Url.Action("StatementOfAccount", "Admin", new { id = item.Id })" target="_blank" class="btn" style="background-color: #366642; color: white; padding: 6px 16px; font-size: 13px; text-decoration: none; border-radius: 50px; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s;">
+                                                <i class="fa-solid fa-print"></i> SOA
+                                            </a>
+                                            @if(!item.IsCommissionPaid)
+                                            {
+                                                <form asp-action="MarkCommissionPaid" method="post" style="display:inline;">
+                                                    <input type="hidden" name="ledgerId" value="@item.Id" />
+                                                    <button type="submit" class="btn" style="background-color: #1F5633; color: white; border: none; padding: 6px 16px; font-size: 13px; border-radius: 50px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: 0.2s;">
+                                                        <i class="fa-solid fa-check"></i> Pay
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted" style="padding: 20px;">
+                                    No completed transactions yet.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+        <div class="pagination-controls" id="ledgerPagination">
+            <button onclick="ledgerFirstPage()" id="ledgerFirstBtn">First</button>
+            <button onclick="ledgerPrevPage()" id="ledgerPrevBtn">Prev</button>
+            <span class="page-info" id="ledgerPageInfo">Page 1 of 1</span>
+            <button onclick="ledgerNextPage()" id="ledgerNextBtn">Next</button>
+            <button onclick="ledgerLastPage()" id="ledgerLastBtn">Last</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let ledgerEntriesPerPage = 5;
+    let ledgerCurrentPage = 1;
+    let ledgerAllRows = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const tbody = document.querySelector('#ledgerTable tbody');
+        ledgerAllRows = Array.from(tbody.getElementsByTagName('tr'));
+        
+        
+        if(ledgerAllRows.length === 1 && ledgerAllRows[0].innerText.includes("No completed transactions yet")) {
+            ledgerAllRows = [];
+            document.getElementById('ledgerPagination').style.display = 'none';
+        } else {
+            updateLedgerPagination();
+        }
+    });
+
+    function updateLedgerPagination() {
+        if(ledgerAllRows.length === 0) return;
+        const searchValue = document.getElementById('ledgerSearch').value.toUpperCase();
+        const visibleRows = ledgerAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        const totalPages = Math.ceil(visibleRows.length / ledgerEntriesPerPage);
+
+        ledgerAllRows.forEach(row => row.style.display = 'none');
+        visibleRows.slice((ledgerCurrentPage - 1) * ledgerEntriesPerPage, ledgerCurrentPage * ledgerEntriesPerPage)
+                   .forEach(row => row.style.display = '');
+
+        document.getElementById('ledgerCounter').textContent = visibleRows.length + ' entries';
+        document.getElementById('ledgerPageInfo').textContent = `Page ${ledgerCurrentPage} of ${totalPages || 1}`;
+
+        document.getElementById('ledgerFirstBtn').disabled = ledgerCurrentPage === 1;
+        document.getElementById('ledgerPrevBtn').disabled = ledgerCurrentPage === 1;
+        document.getElementById('ledgerNextBtn').disabled = ledgerCurrentPage >= totalPages || totalPages === 0;
+        document.getElementById('ledgerLastBtn').disabled = ledgerCurrentPage >= totalPages || totalPages === 0;
+    }
+
+    function filterLedger() { ledgerCurrentPage = 1; updateLedgerPagination(); }
+    function ledgerNextPage() { ledgerCurrentPage++; updateLedgerPagination(); }
+    function ledgerPrevPage() { ledgerCurrentPage--; updateLedgerPagination(); }
+    function ledgerFirstPage() { ledgerCurrentPage = 1; updateLedgerPagination(); }
+    function ledgerLastPage() {
+        const searchValue = document.getElementById('ledgerSearch').value.toUpperCase();
+        const visibleRows = ledgerAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        ledgerCurrentPage = Math.ceil(visibleRows.length / ledgerEntriesPerPage) || 1;
+        updateLedgerPagination();
+    }
+    function changeLedgerEntries() {
+        ledgerEntriesPerPage = parseInt(document.getElementById('ledgerEntries').value);
+        ledgerCurrentPage = 1;
+        updateLedgerPagination();
+    }
+</script>

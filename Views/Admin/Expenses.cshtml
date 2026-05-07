@@ -1,0 +1,404 @@
+@model IEnumerable<BaleteGroveRES.Models.Admin.CompanyExpense>
+
+@{
+    ViewData["Title"] = "Company Expenses";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="~/css/admin-communitynews.css" asp-append-version="true"> 
+
+<style>
+    
+    #expenseTable { min-width: 700px; }
+
+    #expenseTable th:nth-child(1), #expenseTable td:nth-child(1) { width: 14%; text-align: center; }
+    #expenseTable th:nth-child(2), #expenseTable td:nth-child(2) { width: 18%; text-align: center; }
+    #expenseTable th:nth-child(3), #expenseTable td:nth-child(3) { width: 35%; text-align: center; }
+    #expenseTable th:nth-child(4), #expenseTable td:nth-child(4) { width: 18%; text-align: center; }
+    #expenseTable th:nth-child(5), #expenseTable td:nth-child(5) { width: 15%; text-align: center; }
+
+    
+    .category-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        background: #e8ecd7;
+        color: #3a5c1a;
+        border: 1px solid #b8cc90;
+    }
+
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 10000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(45, 82, 52, 0.5);
+        backdrop-filter: blur(4px);
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    
+    .modal-content {
+        background: #f4f5f0;
+        padding: 30px 25px;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        position: relative;
+    }
+
+        .modal-content h2 {
+            margin: 0;
+            color: #234e33;
+            font-weight: 700;
+        }
+
+        .modal-content .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+            .modal-content .form-group label {
+                font-weight: 600;
+                color: #234e33;
+                font-size: 14px;
+            }
+
+        .modal-content select,
+        .modal-content input[type="text"],
+        .modal-content input[type="number"],
+        .modal-content textarea {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            width: 100%;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 10px;
+    }
+
+    .modal-content button {
+        padding: 10px 20px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.25s;
+    }
+
+    .button-group .add, .button-group .save {
+        background: #366642;
+        color: white;
+    }
+
+    .button-group .delete {
+        background: #b83232;
+        color: white;
+    }
+
+    .button-group .cancel {
+        background: #999;
+        color: white;
+    }
+
+    .close-modal {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 24px;
+        cursor: pointer;
+        color: #234e33;
+    }
+</style>
+
+<partial name="_AdminSidebar" />
+
+<div class="dashboard-container">
+    <div class="dashboard-inner">
+        <h1>Company Expenses</h1>
+            
+            <div class="table-header">
+                <div class="left-controls">
+                    <input type="text" placeholder="Search expenses..." class="search-input" id="expenseSearch" onkeyup="filterExpense()" />
+                    <select class="entries-select" id="expenseEntries" onchange="changeExpenseEntries()">
+                        <option value="5" selected>Show 5</option>
+                        <option value="10">Show 10</option>
+                        <option value="20">Show 20</option>
+                    </select>
+                    <div class="entry-counter" id="expenseCounter">0 entries</div>
+                </div>
+                <div class="right-controls">
+                    <button class="btn-add" onclick="openModal('addExpenseModal')">
+                        <i class="fa-solid fa-plus"></i> Log Expense
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="expenseTable">
+                    <thead>
+                        <tr>
+                            <th>Date Incurred</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if(Model != null && Model.Any())
+                        {
+                            foreach(var item in Model)
+                            {
+                                <tr data-id="@item.Id">
+                                    <td>@item.DateIncurred.ToString("MMM dd, yyyy")</td>
+                                    <td class="col-category">
+                                        <span class="category-badge">@item.Category</span>
+                                        <input type="hidden" class="raw-category" value="@item.Category" />
+                                    </td>
+                                    <td class="col-description">@item.Description</td>
+                                    <td class="col-amount" style="color:#d9534f; font-weight: 700;" data-raw="@item.Amount">
+                                        - ₱@item.Amount.ToString("N2")
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons" style="display:flex; gap:5px;">
+                                            <button class="btn-icon btn-edit" onclick="prepareEditModal(this)" title="Edit">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </button>
+                                            <button class="btn-icon btn-delete" onclick="prepareDeleteModal(@item.Id)" title="Delete">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted" style="padding: 20px;">
+                                    No expenses logged yet.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+        <div class="pagination-controls" id="expensePagination">
+            <button onclick="expenseFirstPage()" id="expenseFirstBtn">First</button>
+            <button onclick="expensePrevPage()" id="expensePrevBtn">Prev</button>
+            <span class="page-info" id="expensePageInfo">Page 1 of 1</span>
+            <button onclick="expenseNextPage()" id="expenseNextBtn">Next</button>
+            <button onclick="expenseLastPage()" id="expenseLastBtn">Last</button>
+        </div>
+    </div>
+</div>
+
+
+<div id="addExpenseModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('addExpenseModal')">&times;</span>
+        <h2>Log New Expense</h2>
+        <form asp-action="AddExpense" method="post">
+            <div class="form-group">
+                <label>Category</label>
+                <select name="Category" required>
+                    <option value="Marketing">Marketing & Ads</option>
+                    <option value="Office Supplies">Office Supplies</option>
+                    <option value="Maintenance">Property Maintenance</option>
+                    <option value="Legal">Legal & Permits</option>
+                    <option value="Miscellaneous">Miscellaneous</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" name="Description" required placeholder="e.g. Facebook Ads for June" />
+            </div>
+            <div class="form-group">
+                <label>Amount (₱)</label>
+                <input type="number" step="0.01" min="0" name="Amount" required placeholder="0.00" oninput="enforceNumeric(this)" />
+            </div>
+            <div class="button-group">
+                <button type="submit" class="save">Save Expense</button>
+                <button type="button" class="cancel" onclick="closeModal('addExpenseModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div id="editExpenseModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('editExpenseModal')">&times;</span>
+        <h2>Edit Expense</h2>
+        <form asp-action="EditExpense" method="post">
+            <input type="hidden" name="Id" id="editExpenseId" />
+            <div class="form-group">
+                <label>Category</label>
+                <select name="Category" id="editCategory" required>
+                    <option value="Marketing">Marketing & Ads</option>
+                    <option value="Office Supplies">Office Supplies</option>
+                    <option value="Maintenance">Property Maintenance</option>
+                    <option value="Legal">Legal & Permits</option>
+                    <option value="Miscellaneous">Miscellaneous</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" name="Description" id="editDescription" required />
+            </div>
+            <div class="form-group">
+                <label>Amount (₱)</label>
+                <input type="number" step="0.01" min="0" name="Amount" id="editAmount" required oninput="enforceNumeric(this)" />
+            </div>
+            <div class="button-group">
+                <button type="submit" class="save">Save Changes</button>
+                <button type="button" class="cancel" onclick="closeModal('editExpenseModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div id="deleteExpenseModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('deleteExpenseModal')">&times;</span>
+        <h2>Confirm Delete</h2>
+        <form asp-action="DeleteExpense" method="post">
+            <input type="hidden" name="Id" id="deleteExpenseId" />
+            <p>Are you sure you want to delete this expense record? This action cannot be undone.</p>
+            <div class="button-group">
+                <button type="submit" class="delete">Delete</button>
+                <button type="button" class="cancel" onclick="closeModal('deleteExpenseModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal(id) {
+        document.getElementById(id).style.display = 'flex';
+    }
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    function enforceNumeric(input) {
+        let raw = input.value;
+        
+        let sanitized = raw.replace(/[^0-9.]/g, '');
+        
+        
+        const decimalCount = (sanitized.match(/\./g) || []).length;
+        if (decimalCount > 1) {
+            sanitized = sanitized.substring(0, sanitized.lastIndexOf('.'));
+        }
+
+        if (raw !== sanitized) {
+            input.value = sanitized;
+            input.setCustomValidity("Please enter numbers only. Letters and special symbols are not allowed.");
+            input.reportValidity();
+            
+            setTimeout(() => {
+                input.setCustomValidity("");
+            }, 2500);
+        } else {
+            input.setCustomValidity("");
+        }
+    }
+
+    function prepareEditModal(button) {
+        const row = button.closest('tr');
+        const id = row.getAttribute('data-id');
+        const category = row.querySelector('.raw-category').value;
+        const description = row.querySelector('.col-description').innerText;
+        const amount = row.querySelector('.col-amount').getAttribute('data-raw');
+
+        document.getElementById('editExpenseId').value = id;
+        document.getElementById('editCategory').value = category;
+        document.getElementById('editDescription').value = description;
+        document.getElementById('editAmount').value = amount;
+
+        openModal('editExpenseModal');
+    }
+
+    function prepareDeleteModal(id) {
+        document.getElementById('deleteExpenseId').value = id;
+        openModal('deleteExpenseModal');
+    }
+
+    let expenseEntriesPerPage = 5;
+    let expenseCurrentPage = 1;
+    let expenseAllRows = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const tbody = document.querySelector('#expenseTable tbody');
+        expenseAllRows = Array.from(tbody.getElementsByTagName('tr'));
+        
+        if(expenseAllRows.length === 1 && expenseAllRows[0].innerText.includes("No expenses logged yet")) {
+            expenseAllRows = [];
+            document.getElementById('expensePagination').style.display = 'none';
+        } else {
+            updateExpensePagination();
+        }
+    });
+
+    function updateExpensePagination() {
+        if(expenseAllRows.length === 0) return;
+        const searchValue = document.getElementById('expenseSearch').value.toUpperCase();
+        const visibleRows = expenseAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        const totalPages = Math.ceil(visibleRows.length / expenseEntriesPerPage);
+
+        expenseAllRows.forEach(row => row.style.display = 'none');
+        visibleRows.slice((expenseCurrentPage - 1) * expenseEntriesPerPage, expenseCurrentPage * expenseEntriesPerPage)
+                   .forEach(row => row.style.display = '');
+
+        document.getElementById('expenseCounter').textContent = visibleRows.length + ' entries';
+        document.getElementById('expensePageInfo').textContent = `Page ${expenseCurrentPage} of ${totalPages || 1}`;
+
+        document.getElementById('expenseFirstBtn').disabled = expenseCurrentPage === 1;
+        document.getElementById('expensePrevBtn').disabled = expenseCurrentPage === 1;
+        document.getElementById('expenseNextBtn').disabled = expenseCurrentPage >= totalPages || totalPages === 0;
+        document.getElementById('expenseLastBtn').disabled = expenseCurrentPage >= totalPages || totalPages === 0;
+    }
+
+    function filterExpense() { expenseCurrentPage = 1; updateExpensePagination(); }
+    function expenseNextPage() { expenseCurrentPage++; updateExpensePagination(); }
+    function expensePrevPage() { expenseCurrentPage--; updateExpensePagination(); }
+    function expenseFirstPage() { expenseCurrentPage = 1; updateExpensePagination(); }
+    function expenseLastPage() {
+        const searchValue = document.getElementById('expenseSearch').value.toUpperCase();
+        const visibleRows = expenseAllRows.filter(row => row.innerText.toUpperCase().includes(searchValue));
+        expenseCurrentPage = Math.ceil(visibleRows.length / expenseEntriesPerPage) || 1;
+        updateExpensePagination();
+    }
+    function changeExpenseEntries() {
+        expenseEntriesPerPage = parseInt(document.getElementById('expenseEntries').value);
+        expenseCurrentPage = 1;
+        updateExpensePagination();
+    }
+</script>

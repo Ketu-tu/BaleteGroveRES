@@ -1,0 +1,128 @@
+@model List<BaleteGroveRES.Models.Admin.GalleryImage>
+@{
+    ViewData["Title"] = "Gallery";
+    int currentPage = ViewBag.CurrentPage;
+    int totalPages = ViewBag.TotalPages;
+    string[] pattern = { "large", "tall", "wide", "" };
+}
+
+<link rel="stylesheet" href="~/css/home-gallery.css" asp-append-version="true" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<partial name="_NavBar" />
+
+<section class="gallery-section">
+    <h1 class="gallery-title">Gallery</h1>
+
+    @if (Model == null || !Model.Any())
+    {
+        <p style="text-align:center; color:#888; padding: 60px 0;">No images available yet.</p>
+    }
+    else
+    {
+        <div class="gallery-grid">
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                string cssClass = pattern[i % pattern.Length];
+                <div class="gallery-item @cssClass" data-index="@i">
+                    
+                    <img data-src="@Model[i].ImagePath" alt="Gallery Image @(i + 1)" class="lazy-img">
+                </div>
+            }
+        </div>
+
+        <div class="pagination">
+            @if (currentPage > 1)
+            {
+                <a href="@Url.Action("Gallery", "Home", new { page = currentPage - 1 })">‹ Previous</a>
+            }
+            else
+            {
+                <a class="disabled">‹ Previous</a>
+            }
+
+            @for (int p = 1; p <= totalPages; p++)
+            {
+                if (p == currentPage)
+                {
+                    <a class="active">@p</a>
+                }
+                else
+                {
+                    <a href="@Url.Action("Gallery", "Home", new { page = p })">@p</a>
+                }
+            }
+
+            @if (currentPage < totalPages)
+            {
+                <a href="@Url.Action("Gallery", "Home", new { page = currentPage + 1 })">Next ›</a>
+            }
+            else
+            {
+                <a class="disabled">Next ›</a>
+            }
+        </div>
+    }
+</section>
+
+<partial name="_Footer" />
+
+<div id="lightbox">
+    <div id="btn-close">×</div>
+    <div id="btn-prev" class="lightbox-btn">‹</div>
+    <img id="lightbox-img" src="">
+    <div id="btn-next" class="lightbox-btn">›</div>
+</div>
+
+<script>
+    let currentIndex = 0;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const images = [...document.querySelectorAll('.gallery-item img')].map(i => i.src);
+        const lightbox = document.getElementById("lightbox");
+        const lightImg = document.getElementById("lightbox-img");
+
+        document.querySelectorAll(".gallery-item").forEach(item => {
+            item.addEventListener("click", () => {
+                currentIndex = parseInt(item.dataset.index);
+                openLightbox();
+            });
+        });
+
+        function openLightbox() {
+            lightImg.src = images[currentIndex];
+            lightbox.style.display = "flex";
+        }
+
+        document.getElementById("btn-close").onclick = () => lightbox.style.display = "none";
+
+        document.getElementById("btn-next").onclick = (e) => {
+            e.stopPropagation();
+            currentIndex = (currentIndex + 1) % images.length;
+            openLightbox();
+        };
+
+        document.getElementById("btn-prev").onclick = (e) => {
+            e.stopPropagation();
+            currentIndex = (currentIndex - 1 + images.length) % images.length;
+            openLightbox();
+        };
+
+        lightbox.addEventListener("click", e => {
+            if (e.target === lightbox) lightbox.style.display = "none";
+        });
+    });
+    const lazyImages = document.querySelectorAll('img.lazy-img');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.onload = () => img.classList.add('loaded'); 
+                img.classList.remove('lazy-img');
+                observer.unobserve(img);
+            }
+        });
+    }, { rootMargin: '200px' });
+
+    lazyImages.forEach(img => observer.observe(img));
+</script>
